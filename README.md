@@ -17,7 +17,6 @@
 
 The application is built on a robust MERN-inspired architecture (MongoDB, Express, React/Vite, Node.js), demonstrating rigorous engineering standards including comprehensive CRUD capabilities, multi-format data exports (JSON, CSV, XML, PDF, Markdown), global error handling, and a highly polished, minimalistic UI design system.
 
-*(Note: While originally architected with Next.js App Router, the frontend has been optimized and migrated to a high-performance React + Vite stack to maximize client-side rendering speed and streamline the minimalist UI).*
 
 ---
 
