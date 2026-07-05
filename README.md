@@ -1,4 +1,4 @@
-# AtmosphereAI — Intelligent Weather & Travel Dashboard
+# AtmosphereAI — Intelligent Weather Dashboard
 
 > **Full-Stack AI Engineer Technical Assessment**
 > Built by **Arjun A** for **🔗 [PM Accelerator on LinkedIn](https://www.linkedin.com/school/pmaccelerator/)**
