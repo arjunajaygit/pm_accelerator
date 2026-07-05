@@ -1,7 +1,7 @@
 # AtmosphereAI — Intelligent Weather & Travel Dashboard
 
 > **Full-Stack AI Engineer Technical Assessment**
-> Built by **Arjun A** for **[PM Accelerator](https://www.linkedin.com/company/product-manager-accelerator/)**
+> Built by **Arjun A** for **🔗 [PM Accelerator on LinkedIn](https://www.linkedin.com/school/pmaccelerator/)**
 
 ![React](https://img.shields.io/badge/React-19-blue?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-8-purple?logo=vite)
