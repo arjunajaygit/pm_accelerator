@@ -1,0 +1,451 @@
+/**
+ * Weather Controller — Core business logic and API orchestration.
+ * 
+ * Handles: CRUD operations, upstream API calls (OpenWeatherMap, YouTube, Google Maps, Gemini),
+ * data aggregation, and multi-format exports.
+ */
+
+const Weather = require('../models/Weather');
+const axios = require('axios');
+const { validateDateRange, validateLocation, isValidCoordinates, parseCoordinates, validateUpdateFields } = require('../utils/validators');
+const { exportJSON, exportCSV, exportXML, exportPDF, exportMarkdown } = require('../utils/exporters');
+
+// API Keys from environment
+const OPENWEATHER_KEY = process.env.OPENWEATHER_API_KEY;
+const YOUTUBE_KEY = process.env.YOUTUBE_API_KEY;
+const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_KEY;
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
+
+/**
+ * CREATE — Search weather, aggregate APIs, persist to database.
+ * POST /api/weather
+ */
+exports.createWeatherRecord = async (req, res, next) => {
+  try {
+    const { location, startDate, endDate } = req.body;
+
+    // 1. Validate location
+    const locValidation = validateLocation(location);
+    if (!locValidation.valid) {
+      return res.status(400).json({ 
+        status: 'error', 
+        type: 'VALIDATION_ERROR',
+        message: locValidation.error 
+      });
+    }
+
+    // 2. Validate date range
+    const dateValidation = validateDateRange(
+      startDate || new Date().toISOString(),
+      endDate || new Date().toISOString()
+    );
+    if (!dateValidation.valid) {
+      return res.status(400).json({ 
+        status: 'error', 
+        type: 'VALIDATION_ERROR',
+        message: dateValidation.error 
+      });
+    }
+
+    // 3. Resolve location to coordinates via OpenWeatherMap Geocoding API
+    let lat, lon, resolvedName, country;
+
+    if (locValidation.type === 'coordinates') {
+      // Direct coordinates provided
+      const coords = parseCoordinates(location.trim());
+      lat = coords.lat;
+      lon = coords.lon;
+
+      // Reverse geocode to get location name
+      try {
+        const reverseGeoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OPENWEATHER_KEY}`;
+        const reverseRes = await axios.get(reverseGeoUrl);
+        if (reverseRes.data && reverseRes.data.length > 0) {
+          resolvedName = reverseRes.data[0].name;
+          country = reverseRes.data[0].country;
+        } else {
+          resolvedName = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+          country = '';
+        }
+      } catch {
+        resolvedName = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+        country = '';
+      }
+    } else if (locValidation.type === 'zip') {
+      // ZIP code lookup
+      try {
+        const zipUrl = `https://api.openweathermap.org/geo/1.0/zip?zip=${location.trim()},US&appid=${OPENWEATHER_KEY}`;
+        const zipRes = await axios.get(zipUrl);
+        lat = zipRes.data.lat;
+        lon = zipRes.data.lon;
+        resolvedName = zipRes.data.name;
+        country = zipRes.data.country;
+      } catch (err) {
+        return res.status(404).json({
+          status: 'error',
+          type: 'LOCATION_NOT_FOUND',
+          message: `Could not find a location for ZIP code "${location}". Please verify and try again.`
+        });
+      }
+    } else {
+      // City name / landmark / general text — use direct geocoding
+      try {
+        const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location.trim())}&limit=1&appid=${OPENWEATHER_KEY}`;
+        const geoRes = await axios.get(geoUrl);
+
+        if (!geoRes.data || geoRes.data.length === 0) {
+          return res.status(404).json({
+            status: 'error',
+            type: 'LOCATION_NOT_FOUND',
+            message: `Could not find "${location}". Try a different city name, ZIP code, or GPS coordinates.`
+          });
+        }
+
+        lat = geoRes.data[0].lat;
+        lon = geoRes.data[0].lon;
+        resolvedName = geoRes.data[0].name;
+        country = geoRes.data[0].country;
+      } catch (err) {
+        return res.status(502).json({
+          status: 'error',
+          type: 'GEOCODING_FAILED',
+          message: 'Unable to verify location. The geocoding service may be temporarily unavailable.'
+        });
+      }
+    }
+
+    const fullLocationName = country ? `${resolvedName}, ${country}` : resolvedName;
+
+    // 4. Fetch current weather + 5-day forecast from OpenWeatherMap
+    let currentWeather, forecastData;
+    try {
+      const weatherUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_KEY}`;
+      const weatherRes = await axios.get(weatherUrl);
+      forecastData = weatherRes.data;
+      currentWeather = forecastData.list[0];
+    } catch (err) {
+      return res.status(502).json({
+        status: 'error',
+        type: 'WEATHER_API_FAILED',
+        message: 'Unable to fetch weather data. The weather service may be temporarily unavailable.'
+      });
+    }
+
+    // 5. Build 5-day forecast (extract one entry per unique day)
+    const forecast = [];
+    const seenDays = new Set();
+    for (const item of forecastData.list) {
+      const dayStr = new Date(item.dt * 1000).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const shortDay = new Date(item.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' });
+      if (!seenDays.has(shortDay) && forecast.length < 5) {
+        seenDays.add(shortDay);
+        forecast.push({
+          day: dayStr,
+          temp: Math.round(item.main.temp * 10) / 10,
+          condition: item.weather[0].description,
+          icon: item.weather[0].icon
+        });
+      }
+    }
+
+    // 6. Google Maps embed URL
+    let mapUrl = '';
+    if (GOOGLE_MAPS_KEY) {
+      mapUrl = `https://www.google.com/maps/embed/v1/view?key=${GOOGLE_MAPS_KEY}&center=${lat},${lon}&zoom=11&maptype=roadmap`;
+    } else {
+      // Fallback: OpenStreetMap embed (no API key needed)
+      mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon - 0.05},${lat - 0.05},${lon + 0.05},${lat + 0.05}&layer=mapnik&marker=${lat},${lon}`;
+    }
+
+    // 7. YouTube travel videos (graceful degradation)
+    let videoIds = [];
+    if (YOUTUBE_KEY) {
+      try {
+        const ytQuery = encodeURIComponent(`${resolvedName} ${country || ''} travel guide`);
+        const ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${ytQuery}&type=video&maxResults=3&key=${YOUTUBE_KEY}`;
+        const ytRes = await axios.get(ytUrl);
+        videoIds = ytRes.data.items.map(v => v.id.videoId).filter(Boolean);
+      } catch (ytErr) {
+        console.warn('[YouTube API] Failed to fetch videos:', ytErr.message);
+        videoIds = [];
+      }
+    }
+
+    // 8. AI Travel Insight via Gemini (graceful degradation)
+    let aiInsight = '';
+    if (GEMINI_KEY) {
+      try {
+        const weatherDesc = currentWeather.weather[0].description;
+        const temp = currentWeather.main.temp;
+        const prompt = `You are a concise travel advisor. In 2-3 sentences, provide practical travel advice for someone visiting ${fullLocationName}. The current weather is ${weatherDesc} at ${temp}°C. Include what to wear, any weather precautions, and one unique thing worth knowing about the area. Be specific and helpful.`;
+
+        const aiResponse = await axios.post(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+          {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 150, temperature: 0.7 }
+          },
+          { timeout: 10000 }
+        );
+        aiInsight = aiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      } catch (aiErr) {
+        console.warn('[Gemini API] Failed to generate insight:', aiErr.message);
+        aiInsight = '';
+      }
+    }
+
+    // Provide a meaningful fallback if AI is not available
+    if (!aiInsight) {
+      const temp = currentWeather.main.temp;
+      if (temp < 0) {
+        aiInsight = `Bundle up! ${fullLocationName} is experiencing freezing temperatures. Wear insulated layers, a warm coat, and waterproof boots. Check local road conditions before traveling.`;
+      } else if (temp < 15) {
+        aiInsight = `Pack layers for ${fullLocationName} — temperatures are cool. A light jacket and comfortable walking shoes are recommended. Check the forecast for rain before heading out.`;
+      } else if (temp < 30) {
+        aiInsight = `Great weather for exploring ${fullLocationName}! Light clothing is fine, but bring sunscreen and a hat. Stay hydrated and enjoy the comfortable outdoor conditions.`;
+      } else {
+        aiInsight = `It's quite hot in ${fullLocationName}. Stay hydrated, wear light breathable clothing, and seek shade during peak afternoon hours. Consider early morning or evening activities.`;
+      }
+    }
+
+    // 9. Persist to MongoDB
+    const weatherRecord = new Weather({
+      location: location.trim(),
+      resolvedLocation: fullLocationName,
+      latitude: lat,
+      longitude: lon,
+      temperature: Math.round(currentWeather.main.temp * 10) / 10,
+      feelsLike: Math.round(currentWeather.main.feels_like * 10) / 10,
+      tempMin: Math.round(currentWeather.main.temp_min * 10) / 10,
+      tempMax: Math.round(currentWeather.main.temp_max * 10) / 10,
+      condition: currentWeather.weather[0].description,
+      conditionIcon: currentWeather.weather[0].icon,
+      humidity: currentWeather.main.humidity,
+      windSpeed: Math.round(currentWeather.wind.speed * 3.6 * 10) / 10, // m/s → km/h
+      pressure: currentWeather.main.pressure,
+      visibility: currentWeather.visibility,
+      startDate: dateValidation.start,
+      endDate: dateValidation.end,
+      forecast,
+      aiInsight,
+      mapUrl,
+      videoIds,
+      country: country || '',
+      sunrise: forecastData.city?.sunrise,
+      sunset: forecastData.city?.sunset,
+      timezoneOffset: forecastData.city?.timezone
+    });
+
+    await weatherRecord.save();
+
+    return res.status(201).json({
+      status: 'success',
+      message: `Weather data for ${fullLocationName} saved successfully.`,
+      data: weatherRecord
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * READ — Get all weather records from database.
+ * GET /api/weather
+ */
+exports.getWeatherHistory = async (req, res, next) => {
+  try {
+    const { limit = 50, search } = req.query;
+
+    let query = {};
+    if (search) {
+      query = {
+        $or: [
+          { location: { $regex: search, $options: 'i' } },
+          { resolvedLocation: { $regex: search, $options: 'i' } },
+          { condition: { $regex: search, $options: 'i' } }
+        ]
+      };
+    }
+
+    const records = await Weather.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    return res.status(200).json({
+      status: 'success',
+      count: records.length,
+      data: records
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * READ — Get a single weather record by ID.
+ * GET /api/weather/:id
+ */
+exports.getWeatherById = async (req, res, next) => {
+  try {
+    const record = await Weather.findById(req.params.id);
+    if (!record) {
+      return res.status(404).json({
+        status: 'error',
+        type: 'NOT_FOUND',
+        message: 'Weather record not found.'
+      });
+    }
+    return res.status(200).json({ status: 'success', data: record });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * UPDATE — Update a weather record by ID.
+ * PUT /api/weather/:id
+ */
+exports.updateWeatherRecord = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    // Validate update fields
+    const updateValidation = validateUpdateFields(updates);
+    if (!updateValidation.valid) {
+      return res.status(400).json({
+        status: 'error',
+        type: 'VALIDATION_ERROR',
+        message: updateValidation.error
+      });
+    }
+
+    // Only allow specific fields to be updated
+    const allowedFields = ['temperature', 'condition', 'humidity', 'windSpeed', 'feelsLike', 'aiInsight'];
+    const sanitizedUpdates = {};
+    for (const key of allowedFields) {
+      if (updates[key] !== undefined) {
+        sanitizedUpdates[key] = updates[key];
+      }
+    }
+
+    if (Object.keys(sanitizedUpdates).length === 0) {
+      return res.status(400).json({
+        status: 'error',
+        type: 'VALIDATION_ERROR',
+        message: 'No valid fields provided for update. Allowed fields: ' + allowedFields.join(', ')
+      });
+    }
+
+    const updatedRecord = await Weather.findByIdAndUpdate(
+      id,
+      { $set: sanitizedUpdates },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedRecord) {
+      return res.status(404).json({
+        status: 'error',
+        type: 'NOT_FOUND',
+        message: 'Weather record not found.'
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Record updated successfully.',
+      data: updatedRecord
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE — Remove a weather record by ID.
+ * DELETE /api/weather/:id
+ */
+exports.deleteWeatherRecord = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const record = await Weather.findByIdAndDelete(id);
+    if (!record) {
+      return res.status(404).json({
+        status: 'error',
+        type: 'NOT_FOUND',
+        message: 'Weather record not found. It may have already been deleted.'
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: `Record for "${record.resolvedLocation || record.location}" deleted successfully.`
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * EXPORT — Export all weather data in multiple formats.
+ * GET /api/weather/export?format=json|csv|xml|pdf|md
+ */
+exports.exportWeatherData = async (req, res, next) => {
+  try {
+    const { format } = req.query;
+
+    if (!format) {
+      return res.status(400).json({
+        status: 'error',
+        type: 'VALIDATION_ERROR',
+        message: 'Export format is required. Supported: json, csv, xml, pdf, md'
+      });
+    }
+
+    const records = await Weather.find().sort({ createdAt: -1 }).lean();
+
+    if (records.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        type: 'NO_DATA',
+        message: 'No weather records found to export.'
+      });
+    }
+
+    let result;
+
+    switch (format.toLowerCase()) {
+      case 'json':
+        result = exportJSON(records);
+        break;
+      case 'csv':
+        result = exportCSV(records);
+        break;
+      case 'xml':
+        result = exportXML(records);
+        break;
+      case 'pdf':
+        result = await exportPDF(records);
+        break;
+      case 'md':
+      case 'markdown':
+        result = exportMarkdown(records);
+        break;
+      default:
+        return res.status(400).json({
+          status: 'error',
+          type: 'UNSUPPORTED_FORMAT',
+          message: `Format "${format}" is not supported. Use: json, csv, xml, pdf, or md.`
+        });
+    }
+
+    res.setHeader('Content-Type', result.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    return res.send(result.data);
+
+  } catch (error) {
+    next(error);
+  }
+};
