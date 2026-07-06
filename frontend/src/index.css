@@ -119,22 +119,24 @@ body {
    Minimal Panels
    ========================================================================== */
 .glass-panel {
-  background: rgba(9, 9, 11, 0.45);
-  /* Stronger dark tint for legibility over bright earth */
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(20, 20, 25, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 2.5rem;
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
-  transition: var(--transition-smooth);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 24px 64px rgba(0, 0, 0, 0.4);
   transform: translateZ(0);
-  /* Force GPU compositing for smooth animations */
 }
 
 .glass-panel:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3), 0 32px 80px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 480px) {
@@ -218,9 +220,10 @@ body {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 0.4rem;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -228,6 +231,7 @@ body {
 .gps-btn:hover {
   color: var(--text-main);
   background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .clear-dates-btn {
@@ -235,9 +239,10 @@ body {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 0.4rem;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -245,6 +250,7 @@ body {
 .clear-dates-btn:hover {
   color: #ff4757;
   background: rgba(255, 71, 87, 0.1);
+  transform: translateY(-2px);
 }
 
 .date-input {
@@ -254,7 +260,8 @@ body {
   color: var(--text-main);
   font-family: inherit;
   font-size: 0.9rem;
-  padding: 0.4rem 0.8rem;
+  padding: 0 1rem;
+  min-height: 44px;
   outline: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -356,24 +363,35 @@ body {
 }
 
 /* Staggered cascade reveal — each section fades in with a slight delay */
+@keyframes cascadeFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .stagger-1 {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.0s both;
+  animation: cascadeFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.0s both;
 }
 
 .stagger-2 {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  animation: cascadeFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
 }
 
 .stagger-3 {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  animation: cascadeFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
 }
 
 .stagger-4 {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+  animation: cascadeFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
 }
 
 .stagger-5 {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+  animation: cascadeFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
 }
 
 /* Current Weather */
@@ -453,11 +471,14 @@ body {
 }
 
 .temperature {
-  font-size: 6rem;
+  font-size: 5rem;
   font-weight: 200;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
+  background: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.7));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   line-height: 1;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .temp-hl {
@@ -598,19 +619,23 @@ body {
   gap: 1rem;
 }
 
-.forecast-day {
+.forecast-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem 1rem;
-  background: rgba(255, 255, 255, 0.01);
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  transition: var(--transition-smooth);
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.forecast-day:hover {
-  background: rgba(255, 255, 255, 0.03);
+.forecast-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .day-name {
@@ -639,11 +664,20 @@ body {
 }
 
 .map-container,
-.videos-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  min-width: 0;
+.video-container {
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+
+.map-container iframe,
+.video-container iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .yt-video,
@@ -748,6 +782,19 @@ body {
 
 .sidebar-toggle:hover {
   color: var(--text-main);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .history-sidebar {

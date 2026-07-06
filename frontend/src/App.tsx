@@ -209,6 +209,7 @@ function App() {
         <History size={20} strokeWidth={1.5} />
       </button>
 
+      {historyOpen && <div className="sidebar-overlay" onClick={() => setHistoryOpen(false)} />}
       <div className={`history-sidebar ${historyOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h3>Recent</h3>
@@ -287,42 +288,45 @@ function App() {
               <button type="button" className="gps-btn" onClick={fetchLocationByGPS} title="Use Current Location">
                 <MapPin size={18} strokeWidth={2} />
               </button>
-              <DatePicker
-                selected={startDate ? new Date(startDate + 'T12:00:00Z') : null}
-                onChange={(date: Date | null) => {
-                  if (date) {
-                    const newStartStr = formatYMD(date);
-                    setStartDate(newStartStr);
-                    if (endDate && endDate < newStartStr) setEndDate('');
-                  } else {
-                    setStartDate('');
-                  }
-                }}
-                className="date-input"
-                placeholderText="Start Date"
-                dateFormat="yyyy-MM-dd"
-              />
-              <DatePicker
-                selected={endDate ? new Date(endDate + 'T12:00:00Z') : null}
-                onChange={(date: Date | null) => setEndDate(date ? formatYMD(date) : '')}
-                minDate={startDate ? new Date(startDate + 'T12:00:00Z') : undefined}
-                maxDate={maxEndDate ? new Date(maxEndDate + 'T12:00:00Z') : undefined}
-                className="date-input"
-                placeholderText="End Date"
-                dateFormat="yyyy-MM-dd"
-              />
-              {(startDate || endDate) && (
-                <button 
-                  type="button" 
-                  className="clear-dates-btn" 
-                  onClick={() => { setStartDate(''); setEndDate(''); }}
-                  title="Clear Dates"
-                >
-                  <X size={16} strokeWidth={2} />
-                </button>
-              )}
+              
+              <div className="date-picker-group">
+                <DatePicker
+                  selected={startDate ? new Date(startDate + 'T12:00:00Z') : null}
+                  onChange={(date: Date | null) => {
+                    if (date) {
+                      const newStartStr = formatYMD(date);
+                      setStartDate(newStartStr);
+                      if (endDate && endDate < newStartStr) setEndDate('');
+                    } else {
+                      setStartDate('');
+                    }
+                  }}
+                  className="date-input"
+                  placeholderText="Start Date"
+                  dateFormat="yyyy-MM-dd"
+                />
+                <DatePicker
+                  selected={endDate ? new Date(endDate + 'T12:00:00Z') : null}
+                  onChange={(date: Date | null) => setEndDate(date ? formatYMD(date) : '')}
+                  minDate={startDate ? new Date(startDate + 'T12:00:00Z') : undefined}
+                  maxDate={maxEndDate ? new Date(maxEndDate + 'T12:00:00Z') : undefined}
+                  className="date-input"
+                  placeholderText="End Date"
+                  dateFormat="yyyy-MM-dd"
+                />
+                {(startDate || endDate) && (
+                  <button 
+                    type="button" 
+                    className="clear-dates-btn" 
+                    onClick={() => { setStartDate(''); setEndDate(''); }}
+                    title="Clear Dates"
+                  >
+                    <X size={18} strokeWidth={2} />
+                  </button>
+                )}
+              </div>
             </div>
-            <button type="submit" className="search-btn" disabled={loading}>
+            <button type="submit" className="search-submit" disabled={loading} title="Search">
               {loading ? <Loader2 className="spinner" size={16} strokeWidth={1.5} /> : 'Search'}
             </button>
           </form>
