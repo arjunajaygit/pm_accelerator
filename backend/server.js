@@ -69,8 +69,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ── Serve Frontend in Production ───────────────────────────
-if (process.env.NODE_ENV === 'production') {
+// ── Serve Frontend in Production (Render/Heroku only, NOT Vercel) ──
+if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
   
   app.use((req, res, next) => {
