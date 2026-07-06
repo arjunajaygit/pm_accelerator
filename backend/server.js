@@ -5,6 +5,7 @@
 
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const weatherRoutes = require('./routes/weather');
@@ -68,14 +69,23 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    status: 'error',
-    type: 'NOT_FOUND',
-    message: `Route ${req.method} ${req.path} not found.`
+// ── Serve Frontend in Production ───────────────────────────
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
   });
-});
+} else {
+  // 404 handler for development
+  app.use((req, res) => {
+    res.status(404).json({
+      status: 'error',
+      type: 'NOT_FOUND',
+      message: `Route ${req.method} ${req.path} not found.`
+    });
+  });
+}
 
 // ── Global Error Handler ───────────────────────────────────
 app.use(errorHandler);

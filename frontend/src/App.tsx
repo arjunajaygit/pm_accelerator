@@ -33,7 +33,7 @@ interface WeatherData {
   }>;
 }
 
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = import.meta.env.PROD ? '/api' : 'http://localhost:5001/api';
 
 function App() {
   const [query, setQuery] = useState('');
