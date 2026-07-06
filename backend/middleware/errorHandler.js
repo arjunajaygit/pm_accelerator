@@ -4,7 +4,7 @@
  */
 
 function errorHandler(err, req, res, next) {
-  console.error('[AtmosphereAI Error]', {
+  console.error('[ATMOSPHERE Error]', {
     message: err.message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     path: req.path,

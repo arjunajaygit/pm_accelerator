@@ -1,5 +1,5 @@
 /**
- * AtmosphereAI — Server Entry Point
+ * ATMOSPHERE — Server Entry Point
  * Express.js server with MongoDB connection, CORS, and RESTful API routes.
  */
 
@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 });
 
 // ── Database Connection ────────────────────────────────────
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/atmosphereAI';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/atmosphere';
 
 mongoose.connect(MONGO_URI)
   .then(() => {
@@ -42,6 +42,17 @@ mongoose.connect(MONGO_URI)
   });
 
 // ── API Routes ─────────────────────────────────────────────
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'Welcome to ATMOSPHERE API',
+    version: '1.0.0',
+    endpoints: {
+      weather: '/api/weather',
+      health: '/api/health'
+    }
+  });
+});
+
 app.use('/api/weather', weatherRoutes);
 
 // Health check endpoint
@@ -49,7 +60,7 @@ app.get('/api/health', (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
   res.json({
     status: 'ok',
-    service: 'AtmosphereAI Backend',
+    service: 'ATMOSPHERE Backend',
     version: '1.0.0',
     database: dbStatus,
     uptime: process.uptime(),
@@ -71,7 +82,7 @@ app.use(errorHandler);
 
 // ── Start Server ───────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n🌤️  AtmosphereAI Server running on port ${PORT}`);
+  console.log(`\n🌤️  ATMOSPHERE Server running on port ${PORT}`);
   console.log(`   API Base: http://localhost:${PORT}/api`);
   console.log(`   Health:   http://localhost:${PORT}/api/health\n`);
 });

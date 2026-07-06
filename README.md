@@ -1,4 +1,4 @@
-# AtmosphereAI — Intelligent Weather Dashboard
+# ATMOSPHERE — Intelligent Weather & Travel Dashboard
 
 > **Full-Stack AI Engineer Technical Assessment**
 > Built by **Arjun A** for **🔗 [PM Accelerator on LinkedIn](https://www.linkedin.com/school/pmaccelerator/)**
@@ -13,10 +13,39 @@
 
 ## 📑 Executive Summary
 
-**AtmosphereAI** is a production-ready, full-stack weather and travel intelligence dashboard. Moving beyond standard weather applications, it aggregates real-time meteorological data, interactive mapping, and curated travel video guides, synthesizing them with **Gemini AI** to deliver contextual, actionable travel insights. 
+**ATMOSPHERE** is a production-ready, full-stack weather and travel intelligence dashboard. Moving beyond standard weather applications, it aggregates real-time meteorological data, interactive mapping, and curated travel video guides, synthesizing them with **Groq AI (Llama 3.1)** to deliver contextual, actionable travel insights. 
 
-The application is built on a robust MERN-inspired architecture (MongoDB, Express, React/Vite, Node.js), demonstrating rigorous engineering standards including comprehensive CRUD capabilities, multi-format data exports (JSON, CSV, XML, PDF, Markdown), global error handling, and a highly polished, minimalistic UI design system.
+The application is built on a robust MERN-inspired architecture (MongoDB, Express, React/Vite, Node.js), demonstrating rigorous engineering standards including comprehensive CRUD capabilities, multi-format data exports (JSON, CSV, XML, PDF, Markdown), global error handling, and a highly polished, minimalistic UI design system that is fully mobile responsive.
 
+
+---
+
+## ✨ Features Developed for Technical Assessment
+
+### 1. Advanced Full CRUD Functionality
+- **CREATE (Date Ranges & Procedural Mocking)**: Users can select custom Start and End Dates natively in the search bar. Since the free OpenWeatherMap API does not support historical data (and limits future data to 5 days), a custom **Procedural Mocking Algorithm** was built into the backend. It intercepts date ranges in the deep past or far future and mathematically generates historically plausible weather variations based on the city's current baseline metrics!
+- **READ (Direct Database Retrieval)**: The "Recent" sidebar displays your search history grouped cleanly by city. Clicking any item securely hits the `GET /api/weather/:id` REST endpoint to instantly reconstruct the exact dashboard from your MongoDB record, rather than pinging third-party APIs again.
+- **UPDATE (Inline Renaming)**: Users can hover over the giant location title on their dashboard and click the "Edit" pencil icon. This allows them to custom-rename the location (e.g. changing "Tokyo, JP" to "My Upcoming Trip") and securely save it directly into the database via `PUT /api/weather/:id`.
+- **DELETE (Database Sweeping)**: Every history item in the sidebar features a "Trash" icon. Clicking it hits the `DELETE /api/weather/:id` endpoint. To ensure the UI remains perfectly clean, the backend intelligently sweeps and removes all associated records for that specific city from the database permanently.
+
+### 2. Deep Third-Party Integrations
+- **Groq AI Engine**: Migrated from Google Gemini to the lightning-fast Groq API running `llama-3.1-8b-instant`. The backend intelligently constructs a prompt combining the resolved location and real-time weather metrics, prompting the LLM to generate hyper-specific, 2-3 sentence travel and clothing advice.
+- **One-Click GPS Geolocation**: A `MapPin` icon in the search bar natively hooks into the browser's Geolocation API. With one click, it securely fetches the user's exact latitude and longitude, keeping the UI completely clean of raw coordinates while instantly pulling hyper-local weather data.
+- **YouTube Data API v3**: Contextually searches for `"{Location} travel guide"` and embeds the top video results directly into the UI.
+- **Google Maps API**: Embeds interactive, zoomable maps centered mathematically on the exact coordinates resolved during geocoding.
+
+### 3. Comprehensive Data Exporting
+Users can instantly export their entire database history across 5 different formats:
+- **JSON & XML**: Perfect for developers wanting raw data payloads.
+- **CSV**: Automatically flattened and formatted for Excel data analysts.
+- **PDF**: Generates a gorgeous, formatted, multi-page visual document for executives.
+- **Markdown**: Formats the database into a clean text document.
+
+### 4. High-End UI & UX Architecture
+- **Atmospheric Infinite Background (Cesium/WebGL)**: The application features a breathtaking, highly-optimized interactive Earth background component. It sits entirely outside the main application DOM flow (z-index managed) to prevent scrolling bleeds and uses a high-performance WebGL context.
+- **Complete Mobile Responsiveness**: Extensive CSS Flexbox and Grid media queries ensure the dashboard seamlessly collapses into stackable elements on mobile phones, including custom horizontal-scrolling 5-day forecast carousels.
+- **Hardware-Accelerated Micro-Animations**: Utilizes CSS `transform: translate3d` and `opacity` transitions for hover states and layout shifts. By offloading these animations directly to the computer's GPU, the UI achieves a buttery-smooth 60FPS render cycle without blocking the React main thread.
+- **Premium Glassmorphism Design**: Features beautiful translucent frosted-glass panels (`backdrop-filter: blur`) with dynamic, harmonious color palettes that automatically adjust based on the current weather condition (Clear, Rain, Snow, etc.).
 
 ---
 
@@ -52,7 +81,7 @@ graph TD
         OWM[OpenWeatherMap API]
         YT[YouTube Data API]
         GMaps[Google Maps Embed API]
-        Gemini[Google Gemini AI]
+        Groq[Groq AI]
     end
 
     %% Data Flow
@@ -68,23 +97,6 @@ graph TD
 
 ---
 
-## 🤖 AI & API Integrations
-
-The true power of AtmosphereAI lies in its orchestration of multiple third-party services:
-
-1. **OpenWeatherMap API (Geocoding & Forecast)**
-   - Resolves diverse location inputs (ZIP, City Name, Coordinates) into precise latitude/longitude.
-   - Fetches current weather metrics and a comprehensive 5-day forecast.
-2. **Google Gemini AI (Generative Insights)**
-   - Acts as a digital travel advisor. The backend constructs an intelligent prompt combining the resolved location, current temperature, and weather conditions, instructing Gemini to generate 2-3 sentences of practical travel advice and clothing recommendations.
-   - Includes graceful degradation: If the AI API rate limits or fails, a deterministic algorithm provides fallback advice based on temperature thresholds.
-3. **YouTube Data API v3**
-   - Contextually searches for `"Location Name + Travel Guide"` and retrieves the top embedded video guides for the dashboard.
-4. **Google Maps Embed API**
-   - Generates interactive, embedded maps centered exactly on the coordinates resolved during the geocoding phase.
-
----
-
 ## 🏗️ Production Readiness & Engineering Standards
 
 This project was built to demonstrate seniority in full-stack development, focusing on stability, security, and user experience.
@@ -95,84 +107,58 @@ This project was built to demonstrate seniority in full-stack development, focus
 
 ### 2. Sophisticated Error Handling
 - **Global Error Middleware**: The Express backend uses a unified error-handling middleware that intercepts API failures, validation errors, and database timeouts, returning structured JSON error payloads to the client.
-- **Graceful Degradation**: If YouTube or Gemini APIs fail, the core weather functionality continues to operate seamlessly, providing fallback data without crashing the client.
+- **Graceful Degradation**: If YouTube or Groq AI APIs fail, the core weather functionality continues to operate seamlessly, providing fallback data without crashing the client.
 
-### 3. Responsive & Minimalist Engineering
-- **CSS Architecture**: The UI utilizes a custom, scalable Vanilla CSS design system. It avoids heavy UI libraries in favor of a bespoke **Minimalist Dark Theme** featuring ultra-thin typography, subtle ambient glows that react to the weather condition, and refined glassmorphism (1px borders with translucent backgrounds).
-- **Responsive Layout**: Designed mobile-first, ensuring the grid layouts (forecasts, metrics, and media embeds) elegantly reflow across tablet and desktop viewports.
-
-### 4. Multi-Format Data Export Strategy
-- Demonstrates advanced data manipulation by allowing users to export their weather history in 5 distinct formats:
-  - **JSON & CSV** for developer integration.
-  - **XML** built with `js2xmlparser`.
-  - **Markdown** for documentation.
-  - **PDF** styled and generated server-side using `pdf-lib`.
+### 3. Code Quality
+- **Separation of Concerns**: The backend strictly separates API Routes (`routes/`), Business Logic (`controllers/`), Data Models (`models/`), and Utilities (`utils/`).
+- **Security Best Practices**: All sensitive API keys and MongoDB connection URIs are securely managed via `.env` files and completely isolated from the frontend payload.
 
 ---
 
-## ⚙️ Setup & Installation Instructions
+## 🚀 Quick Start Guide
 
 ### Prerequisites
-- **Node.js** 20.9+
-- **MongoDB** (Local instance or MongoDB Atlas)
+- Node.js (v18+)
+- MongoDB (Local or Atlas Cluster)
 
-### 1. Repository Setup
-
+### 1. Clone & Install
 ```bash
-git clone https://github.com/yourusername/atmosphere-weather-app.git
-cd atmosphere-weather-app
-```
+git clone <repository-url>
+cd pm_accelerator_weather_app
 
-### 2. Backend Configuration
-
-```bash
+# Install Backend Dependencies
 cd backend
 npm install
-cp .env.example .env
+
+# Install Frontend Dependencies
+cd ../frontend
+npm install
 ```
 
-Edit the newly created `.env` file with your credentials:
-
+### 2. Environment Setup
+Create a `.env` file in the `backend/` directory based on the provided `.env.example`:
 ```env
-MONGO_URI=mongodb://localhost:27017/atmosphereAI
-OPENWEATHER_API_KEY=your_openweathermap_key
-YOUTUBE_API_KEY=your_youtube_v3_key
-GOOGLE_MAPS_KEY=your_google_maps_key
-GEMINI_API_KEY=your_gemini_api_key
+MONGO_URI=mongodb://localhost:27017/atmosphere
 PORT=5001
+OPENWEATHER_API_KEY=your_key_here
+YOUTUBE_API_KEY=your_key_here
+GOOGLE_MAPS_KEY=your_key_here
+GROQ_API_KEY=your_key_here
 ```
 
-Start the backend server:
+### 3. Run the Application
+Open two terminal windows:
+
+**Terminal 1 (Backend):**
 ```bash
+cd backend
 npm run dev
-# The API will be available at http://localhost:5001/api
 ```
 
-### 3. Frontend Configuration
-
-Open a new terminal window:
-
+**Terminal 2 (Frontend):**
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
 
-- The React application will launch on **http://localhost:3000**.
-- *Note: The backend CORS is strictly configured to accept requests from port 3000.*
-
----
-
-## 📡 Core API Reference
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/weather` | Aggregates all external APIs, generates AI insight, and persists data. |
-| `GET` | `/api/weather` | Retrieves historical searches with pagination (`limit`). |
-| `PUT` | `/api/weather/:id` | Updates specific allowed fields in a historical record. |
-| `DELETE` | `/api/weather/:id` | Deletes a historical record. |
-| `GET` | `/api/weather/export?format=...` | Streams formatted data (`json`, `csv`, `xml`, `pdf`, `md`). |
-
----
-
-*Engineered by Arjun A for the Product Manager Accelerator program.*
+The application will now be running seamlessly at `http://localhost:5173`.

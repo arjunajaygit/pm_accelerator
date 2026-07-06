@@ -1,13 +1,18 @@
 {
-  "name": "atmosphereai-backend",
+  "name": "atmosphere-backend",
   "version": "1.0.0",
-  "description": "AtmosphereAI Backend — Express.js + MongoDB weather API with CRUD, multi-API integration, and data export",
+  "description": "ATMOSPHERE Backend — Express.js + MongoDB weather API with CRUD, multi-API integration, and data export",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js"
   },
-  "keywords": ["weather", "api", "express", "mongodb"],
+  "keywords": [
+    "weather",
+    "api",
+    "express",
+    "mongodb"
+  ],
   "author": "Arjun A",
   "license": "MIT",
   "type": "commonjs",
