@@ -1219,23 +1219,39 @@ body {
    ========================================================================== */
 @media (max-width: 768px) {
   .app-container {
-    padding: 1rem;
+    padding: 0.75rem;
   }
   
   .header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
-  }
-  
-  .search-inputs {
-    flex-direction: column;
-    align-items: stretch;
+    z-index: 999999; /* Force header above all animated dashboard elements */
   }
   
   .search-bar {
     padding: 1rem;
     border-radius: 20px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-inputs {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .react-datepicker-wrapper {
+    width: 100%;
+    display: block;
+  }
+  
+  .search-input, .date-input {
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
   }
   
   .weather-main {
@@ -1245,15 +1261,7 @@ body {
     gap: 1.5rem;
   }
   
-  .location-header {
-    justify-content: center;
-  }
-  
-  .condition-line {
-    justify-content: center;
-  }
-  
-  .temp-display {
+  .location-header, .condition-line, .temp-display {
     justify-content: center;
   }
   
@@ -1266,16 +1274,12 @@ body {
     gap: 0.5rem;
   }
   
-  .insight-grid {
+  .insight-grid, .video-grid {
     grid-template-columns: 1fr;
   }
   
   .video-container {
     grid-column: span 1;
-  }
-  
-  .video-grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -1287,20 +1291,31 @@ body {
   .forecast-grid {
     display: flex;
     overflow-x: auto;
-    padding-bottom: 0.5rem;
+    padding-bottom: 1rem;
     scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
   }
   
   .forecast-item {
-    min-width: 80px;
-    scroll-snap-align: start;
+    min-width: 90px;
+    scroll-snap-align: center;
+    flex-shrink: 0;
   }
   
   .location-info h2 {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
   
   .temperature {
-    font-size: 3.5rem;
+    font-size: 3rem;
+  }
+  
+  .search-input {
+    font-size: 1rem;
+  }
+  
+  .date-input {
+    font-size: 0.9rem;
+    padding: 0.6rem;
   }
 }
