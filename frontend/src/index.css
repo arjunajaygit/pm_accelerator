@@ -750,6 +750,14 @@ body {
   color: var(--text-main);
 }
 
+@media (max-width: 768px) {
+  .sidebar-toggle {
+    left: auto;
+    right: 1.25rem;
+    top: 1.25rem;
+  }
+}
+
 .history-sidebar {
   position: fixed;
   top: 0;
