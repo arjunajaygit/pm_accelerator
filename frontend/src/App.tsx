@@ -316,7 +316,14 @@ function App() {
 
       <main className="main-content">
         <header className="header">
-          <h1 className="logo">Atmosphere</h1>
+          <h1 
+            className="logo" 
+            onClick={() => { setWeather(null); setQuery(''); setError(''); }}
+            style={{ cursor: 'pointer' }}
+            title="Return to Home"
+          >
+            Atmosphere
+          </h1>
           <form className="search-bar" onSubmit={searchWeather}>
             <div className="search-inputs">
               <Search className="search-icon" size={18} strokeWidth={1.5} />
