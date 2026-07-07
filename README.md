@@ -42,10 +42,11 @@ Users can instantly export their entire database history across 5 different form
 - **Markdown**: Formats the database into a clean text document.
 
 ### 4. High-End UI & UX Architecture
-- **Atmospheric Infinite Background (Cesium/WebGL)**: The application features a breathtaking, highly-optimized interactive Earth background component. It sits entirely outside the main application DOM flow (z-index managed) to prevent scrolling bleeds and uses a high-performance WebGL context.
+- **Interactive 3D WebGL Earth (Normal Mode)**: The application features a breathtaking, highly-optimized interactive 3D Earth background powered by CesiumJS. It features cinematic auto-rotation and seamlessly executes dynamic camera flights across the globe based on searched locations.
+- **Eco-Friendly Lite Mode**: For users on low-end devices or aiming to save battery, an intuitive top-right toggle seamlessly unmounts the resource-heavy WebGL engine. The background gracefully falls back to highly premium, full-viewport dynamic linear gradients that match the current weather condition (e.g., slate for clouds, deep blue for clear skies).
 - **Complete Mobile Responsiveness**: Extensive CSS Flexbox and Grid media queries ensure the dashboard seamlessly collapses into stackable elements on mobile phones, including custom horizontal-scrolling 5-day forecast carousels.
 - **Hardware-Accelerated Micro-Animations**: Utilizes CSS `transform: translate3d` and `opacity` transitions for hover states and layout shifts. By offloading these animations directly to the computer's GPU, the UI achieves a buttery-smooth 60FPS render cycle without blocking the React main thread.
-- **Premium Glassmorphism Design**: Features beautiful translucent frosted-glass panels (`backdrop-filter: blur`) with dynamic, harmonious color palettes that automatically adjust based on the current weather condition (Clear, Rain, Snow, etc.).
+- **Premium Glassmorphism Design**: Features beautiful translucent frosted-glass panels (`backdrop-filter: blur`) with dynamic, harmonious styling that automatically adjusts its blur intensity and contrast depending on whether the app is running over the 3D Earth or in Lite Mode.
 
 ---
 
