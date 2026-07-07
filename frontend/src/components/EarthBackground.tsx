@@ -63,7 +63,10 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
 
     // Enable dynamic lighting (terminator)
     viewer.scene.globe.enableLighting = true;
-    viewer.scene.globe.depthTestAgainstTerrain = true;
+    viewer.scene.globe.depthTestAgainstTerrain = false; // CRITICAL: Must be false on flat ellipsoid to prevent Z-fighting artifacts
+
+    // Optimize cache to prevent tile tearing
+    viewer.scene.globe.tileCacheSize = 1000;
 
     // Disable camera controls for passive background
     viewer.scene.screenSpaceCameraController.enableInputs = false;
