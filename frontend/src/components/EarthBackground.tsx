@@ -49,6 +49,18 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
     // Enable Anti-Aliasing (fixes graininess)
     viewer.scene.msaaSamples = 4;
 
+    // --- PERFORMANCE OPTIMIZATIONS ---
+    // 1. Resolution Scale: Drop render resolution slightly on Retina/4K displays to save massive GPU fill rate, MSAA handles the edges
+    viewer.resolutionScale = window.devicePixelRatio > 1 ? 0.75 : 1.0;
+    
+    // 2. Disable redundant FXAA post-processing since we are using native hardware MSAA
+    if (viewer.scene.postProcessStages.fxaa) {
+      viewer.scene.postProcessStages.fxaa.enabled = false;
+    }
+
+    // 3. Cap frame rate to prevent GPU thermal throttling
+    viewer.targetFrameRate = 60;
+
     // Force continuous rendering since we have auto-rotation
     viewer.scene.requestRenderMode = false;
 
