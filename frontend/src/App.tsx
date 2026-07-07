@@ -99,7 +99,10 @@ function App() {
   const searchWeather = async (e?: React.FormEvent, historyLocation?: string) => {
     if (e) e.preventDefault();
     const searchQuery = historyLocation || query;
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      setError('Please enter a location (City Name, ZIP Code, etc.) before searching.');
+      return;
+    }
     
     setLoading(true);
     setError('');
