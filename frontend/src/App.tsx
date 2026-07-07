@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Loader2, Thermometer, Wind, Droplets, Eye, Download, History, X, Sparkles, Sunrise, Sunset, Trash2, Edit2, Check, MapPin, Leaf } from 'lucide-react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
@@ -67,6 +67,9 @@ function App() {
   // Lite Mode State
   const [isLiteMode, setIsLiteMode] = useState(false);
 
+  // Sidebar outside-click ref
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
   const fetchHistory = async () => {
     try {
       const res = await axios.get(`${API_BASE}/weather?limit=10`);
@@ -79,6 +82,31 @@ function App() {
   useEffect(() => {
     fetchHistory();
   }, []);
+
+  // Auto-vanish error messages after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Handle click-away to close sidebar
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (historyOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        if (!(event.target as Element).closest('.sidebar-toggle')) {
+          setHistoryOpen(false);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [historyOpen]);
 
   const getBgClass = () => {
     if (!weather) return 'bg-default';
@@ -224,7 +252,7 @@ function App() {
         <span>{isLiteMode ? 'Normal Mode' : 'Lite Mode'}</span>
       </button>
 
-      <div className={`history-sidebar ${historyOpen ? 'open' : ''}`}>
+      <div ref={sidebarRef} className={`history-sidebar ${historyOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h3>Recent</h3>
           <button onClick={() => setHistoryOpen(false)} className="close-btn">
