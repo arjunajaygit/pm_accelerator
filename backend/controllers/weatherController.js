@@ -116,13 +116,19 @@ exports.createWeatherRecord = async (req, res, next) => {
 
     const fullLocationName = country ? `${resolvedName}, ${country}` : resolvedName;
 
-    // 4. Fetch current weather + 5-day forecast from OpenWeatherMap
+    // 4. Fetch precise live current weather + 5-day forecast from OpenWeatherMap concurrently
     let currentWeather, forecastData;
     try {
-      const weatherUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_KEY}`;
-      const weatherRes = await axios.get(weatherUrl);
-      forecastData = weatherRes.data;
-      currentWeather = forecastData.list[0];
+      const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_KEY}`;
+      const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_KEY}`;
+      
+      const [forecastRes, currentRes] = await Promise.all([
+        axios.get(forecastUrl),
+        axios.get(currentUrl)
+      ]);
+      
+      forecastData = forecastRes.data;
+      currentWeather = currentRes.data;
     } catch (err) {
       return res.status(502).json({
         status: 'error',

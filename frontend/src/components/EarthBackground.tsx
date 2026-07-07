@@ -73,8 +73,10 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
       (viewer.creditDisplay.container as HTMLElement).style.display = 'none';
     }
 
-    // Enable dynamic lighting (terminator)
+    // Enable dramatic day/night dynamic lighting
     viewer.scene.globe.enableLighting = true;
+    viewer.scene.globe.dynamicAtmosphereLighting = true; // Makes the night side noticeably darker and atmosphere react to sun
+    viewer.scene.globe.showWaterEffect = false; // CRITICAL: Prevents the ocean from reflecting light and glowing in the dark
     viewer.scene.globe.depthTestAgainstTerrain = false; // CRITICAL: Must be false on flat ellipsoid to prevent Z-fighting artifacts
 
     // Optimize cache to prevent tile tearing
