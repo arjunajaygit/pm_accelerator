@@ -88,10 +88,10 @@ exports.createWeatherRecord = async (req, res, next) => {
         });
       }
     } else {
-      // City name / landmark / general text — use direct geocoding
+      // City name / landmark / general text — use smarter OpenStreetMap Nominatim geocoding (Sorts by global importance)
       try {
-        const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location.trim())}&limit=1&appid=${OPENWEATHER_KEY}`;
-        const geoRes = await axios.get(geoUrl);
+        const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location.trim())}&format=json&limit=1`;
+        const geoRes = await axios.get(geoUrl, { headers: { 'User-Agent': 'AtmosphereWeatherApp/1.0' } });
 
         if (!geoRes.data || geoRes.data.length === 0) {
           return res.status(404).json({
@@ -101,10 +101,20 @@ exports.createWeatherRecord = async (req, res, next) => {
           });
         }
 
-        lat = geoRes.data[0].lat;
-        lon = geoRes.data[0].lon;
-        resolvedName = geoRes.data[0].name;
-        country = geoRes.data[0].country;
+        lat = parseFloat(geoRes.data[0].lat);
+        lon = parseFloat(geoRes.data[0].lon);
+        
+        // Reverse geocode via OWM to get a clean standard Name + Country Code format
+        const reverseGeoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OPENWEATHER_KEY}`;
+        const reverseRes = await axios.get(reverseGeoUrl);
+        
+        if (reverseRes.data && reverseRes.data.length > 0) {
+          resolvedName = reverseRes.data[0].name;
+          country = reverseRes.data[0].country;
+        } else {
+          resolvedName = geoRes.data[0].name || location.trim();
+          country = '';
+        }
       } catch (err) {
         return res.status(502).json({
           status: 'error',
