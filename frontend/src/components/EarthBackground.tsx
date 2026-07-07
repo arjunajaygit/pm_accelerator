@@ -79,6 +79,14 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
     viewer.scene.globe.showWaterEffect = false; // CRITICAL: Prevents the ocean from reflecting light and glowing in the dark
     viewer.scene.globe.depthTestAgainstTerrain = false; // CRITICAL: Must be false on flat ellipsoid to prevent Z-fighting artifacts
 
+    // Add NASA 'Earth at Night' (Black Marble) layer for stunning day/night contrast
+    Cesium.IonImageryProvider.fromAssetId(3812).then((provider) => {
+      if (!viewerRef.current || viewerRef.current.isDestroyed()) return;
+      const nightLayer = viewerRef.current.imageryLayers.addImageryProvider(provider);
+      nightLayer.dayAlpha = 0.0; // Invisible during the day
+      nightLayer.nightAlpha = 1.0; // Fully opaque city lights in the shadow
+    }).catch(err => console.warn('Failed to load night imagery', err));
+
     // Optimize cache to prevent tile tearing
     viewer.scene.globe.tileCacheSize = 1000;
 
