@@ -214,11 +214,11 @@ function App() {
 
       {/* Explicit Lite Mode Toggle */}
       <button 
-        className={`mode-toggle-top ${isLiteMode ? 'active' : ''}`} 
+        className={`mode-toggle-top ${!isLiteMode ? 'active-green' : ''}`} 
         onClick={() => setIsLiteMode(!isLiteMode)}
       >
         <Leaf size={16} strokeWidth={1.5} />
-        <span>{isLiteMode ? 'Lite Mode' : 'Normal Mode'}</span>
+        <span>{isLiteMode ? 'Normal Mode' : 'Lite Mode'}</span>
       </button>
 
       <div className={`history-sidebar ${historyOpen ? 'open' : ''}`}>
