@@ -90,7 +90,7 @@ exports.createWeatherRecord = async (req, res, next) => {
     } else {
       // City name / landmark / general text — use smarter OpenStreetMap Nominatim geocoding (Sorts by global importance)
       try {
-        const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location.trim())}&format=json&limit=1`;
+        const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location.trim())}&format=json&limit=1&addressdetails=1`;
         const geoRes = await axios.get(geoUrl, { headers: { 'User-Agent': 'AtmosphereWeatherApp/1.0' } });
 
         if (!geoRes.data || geoRes.data.length === 0) {
@@ -101,20 +101,16 @@ exports.createWeatherRecord = async (req, res, next) => {
           });
         }
 
-        lat = parseFloat(geoRes.data[0].lat);
-        lon = parseFloat(geoRes.data[0].lon);
+        const primaryMatch = geoRes.data[0];
+        lat = parseFloat(primaryMatch.lat);
+        lon = parseFloat(primaryMatch.lon);
         
-        // Reverse geocode via OWM to get a clean standard Name + Country Code format
-        const reverseGeoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OPENWEATHER_KEY}`;
-        const reverseRes = await axios.get(reverseGeoUrl);
+        // Nominatim perfectly preserves the searched major city name (e.g. 'Tokyo' instead of 'Chiyoda')
+        resolvedName = primaryMatch.name || location.trim();
+        country = primaryMatch.address && primaryMatch.address.country_code 
+          ? primaryMatch.address.country_code.toUpperCase() 
+          : '';
         
-        if (reverseRes.data && reverseRes.data.length > 0) {
-          resolvedName = reverseRes.data[0].name;
-          country = reverseRes.data[0].country;
-        } else {
-          resolvedName = geoRes.data[0].name || location.trim();
-          country = '';
-        }
       } catch (err) {
         return res.status(502).json({
           status: 'error',
