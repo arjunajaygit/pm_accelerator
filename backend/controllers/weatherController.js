@@ -90,7 +90,7 @@ exports.createWeatherRecord = async (req, res, next) => {
     } else {
       // City name / landmark / general text — use smarter OpenStreetMap Nominatim geocoding (Sorts by global importance)
       try {
-        const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location.trim())}&format=json&limit=1&addressdetails=1`;
+        const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location.trim())}&format=json&limit=1&addressdetails=1&accept-language=en`;
         const geoRes = await axios.get(geoUrl, { headers: { 'User-Agent': 'AtmosphereWeatherApp/1.0' } });
 
         if (!geoRes.data || geoRes.data.length === 0) {
