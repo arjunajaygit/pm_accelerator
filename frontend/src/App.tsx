@@ -218,7 +218,7 @@ function App() {
         onClick={() => setIsLiteMode(!isLiteMode)}
       >
         <Leaf size={16} strokeWidth={1.5} />
-        <span>{isLiteMode ? '3D Mode' : 'Lite Mode'}</span>
+        <span>{isLiteMode ? 'Lite Mode' : 'Normal Mode'}</span>
       </button>
 
       <div className={`history-sidebar ${historyOpen ? 'open' : ''}`}>
