@@ -121,7 +121,12 @@ function App() {
   const formatTime = (unixSec?: number, offsetSec?: number) => {
     if (!unixSec || offsetSec === undefined) return '--:--';
     const d = new Date((unixSec + offsetSec) * 1000);
-    return d.toISOString().substr(11, 5);
+    let hours = d.getUTCHours();
+    const minutes = d.getUTCMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; 
+    return `${hours}:${minutes} ${ampm}`;
   };
 
   const searchWeather = async (e?: React.FormEvent, historyLocation?: string) => {
