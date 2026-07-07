@@ -34,11 +34,20 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
       infoBox: false,
       selectionIndicator: false,
       skyAtmosphere: new Cesium.SkyAtmosphere(),
-      requestRenderMode: true,       // Only render when something changes (massive perf gain)
-      maximumRenderTimeChange: Infinity, // Let preUpdate drive renders
+      scene3DOnly: true,
+      contextOptions: {
+        webgl: {
+          alpha: true,
+          antialias: true,
+          powerPreference: "high-performance"
+        }
+      }
     });
 
     viewerRef.current = viewer;
+
+    // Enable Anti-Aliasing (fixes graininess)
+    viewer.scene.msaaSamples = 4;
 
     // Force continuous rendering since we have auto-rotation
     viewer.scene.requestRenderMode = false;
@@ -54,9 +63,7 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
 
     // Enable dynamic lighting (terminator)
     viewer.scene.globe.enableLighting = true;
-
-    // Reduce tile detail for background use (improves load speed + reduces GPU load)
-    viewer.scene.globe.maximumScreenSpaceError = 4; // default is 2, higher = less detail = faster
+    viewer.scene.globe.depthTestAgainstTerrain = true;
 
     // Disable camera controls for passive background
     viewer.scene.screenSpaceCameraController.enableInputs = false;
