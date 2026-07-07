@@ -837,8 +837,8 @@ body {
   max-width: 85vw;
   /* Prevent sidebar from covering the entire screen on small phones */
   z-index: 100;
-  background: rgba(9, 9, 11, 0.95);
-  border-right: 1px solid var(--panel-border);
+  background: rgba(9, 9, 11, 0.45);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   transform: translate3d(-100%, 0, 0);
   /* Use translate3d for GPU-accelerated slide */
   transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
@@ -846,8 +846,9 @@ body {
   display: flex;
   flex-direction: column;
   padding: 2rem;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(32px) saturate(1.2);
+  -webkit-backdrop-filter: blur(32px) saturate(1.2);
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.4);
 }
 
 .history-sidebar.open {
