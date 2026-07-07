@@ -260,27 +260,6 @@ body {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.lite-mode-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0.4rem;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.lite-mode-btn:hover {
-  color: #a3e635;
-  background: rgba(163, 230, 53, 0.1);
-}
-.lite-mode-btn.active {
-  color: #a3e635;
-  background: rgba(163, 230, 53, 0.15);
-}
-
 .clear-dates-btn {
   background: transparent;
   border: none;
@@ -803,9 +782,49 @@ body {
 
 @media (max-width: 768px) {
   .sidebar-toggle {
-    left: auto;
-    right: 1.25rem;
+    left: 1.25rem;
     top: 1.25rem;
+  }
+}
+
+.mode-toggle-top {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: var(--transition-smooth);
+}
+
+.mode-toggle-top:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.mode-toggle-top.active {
+  color: #a3e635;
+  border-color: rgba(163, 230, 53, 0.3);
+  background: rgba(163, 230, 53, 0.1);
+}
+
+@media (max-width: 768px) {
+  .mode-toggle-top {
+    top: 1.25rem;
+    right: 1.25rem;
   }
 }
 

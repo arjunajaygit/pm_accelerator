@@ -212,6 +212,15 @@ function App() {
         <History size={20} strokeWidth={1.5} />
       </button>
 
+      {/* Explicit Lite Mode Toggle */}
+      <button 
+        className={`mode-toggle-top ${isLiteMode ? 'active' : ''}`} 
+        onClick={() => setIsLiteMode(!isLiteMode)}
+      >
+        <Leaf size={16} strokeWidth={1.5} />
+        <span>{isLiteMode ? '3D Mode' : 'Lite Mode'}</span>
+      </button>
+
       <div className={`history-sidebar ${historyOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h3>Recent</h3>
@@ -289,9 +298,6 @@ function App() {
               />
               <button type="button" className="gps-btn" onClick={fetchLocationByGPS} title="Use Current Location">
                 <MapPin size={18} strokeWidth={2} />
-              </button>
-              <button type="button" className={`lite-mode-btn ${isLiteMode ? 'active' : ''}`} onClick={() => setIsLiteMode(!isLiteMode)} title={isLiteMode ? "Disable Lite Mode" : "Enable Lite Mode (Battery Saver)"}>
-                <Leaf size={18} strokeWidth={2} />
               </button>
               <DatePicker
                 selected={startDate ? new Date(startDate + 'T12:00:00Z') : null}
