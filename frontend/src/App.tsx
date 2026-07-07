@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Loader2, Thermometer, Wind, Droplets, Eye, Download, History, X, Sparkles, Sunrise, Sunset, Trash2, Edit2, Check, MapPin } from 'lucide-react';
+import { Search, Loader2, Thermometer, Wind, Droplets, Eye, Download, History, X, Sparkles, Sunrise, Sunset, Trash2, Edit2, Check, MapPin, Leaf } from 'lucide-react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -63,6 +63,9 @@ function App() {
   // CRUD UPDATE State
   const [editingLocation, setEditingLocation] = useState(false);
   const [newLocationName, setNewLocationName] = useState('');
+
+  // Lite Mode State
+  const [isLiteMode, setIsLiteMode] = useState(false);
 
   const fetchHistory = async () => {
     try {
@@ -201,8 +204,8 @@ function App() {
   return (
     <>
       {/* Background sits entirely outside the main app flow to guarantee it never scrolls */}
-      <EarthBackground targetLocation={weather?.resolvedLocation} />
-      <div className={`app-container ${getBgClass()}`}>
+      {!isLiteMode && <EarthBackground targetLocation={weather?.resolvedLocation} />}
+      <div className={`app-container ${getBgClass()} ${isLiteMode ? 'lite-mode' : ''}`}>
 
       {/* Minimal Sidebar Toggle */}
       <button className="sidebar-toggle" onClick={() => setHistoryOpen(true)}>
@@ -286,6 +289,9 @@ function App() {
               />
               <button type="button" className="gps-btn" onClick={fetchLocationByGPS} title="Use Current Location">
                 <MapPin size={18} strokeWidth={2} />
+              </button>
+              <button type="button" className={`lite-mode-btn ${isLiteMode ? 'active' : ''}`} onClick={() => setIsLiteMode(!isLiteMode)} title={isLiteMode ? "Disable Lite Mode" : "Enable Lite Mode (Battery Saver)"}>
+                <Leaf size={18} strokeWidth={2} />
               </button>
               <DatePicker
                 selected={startDate ? new Date(startDate + 'T12:00:00Z') : null}
