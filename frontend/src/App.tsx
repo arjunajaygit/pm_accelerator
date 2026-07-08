@@ -151,7 +151,9 @@ function App() {
       setQuery('');
       fetchHistory();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch weather data.');
+      const msg = err.response?.data?.message || 'Failed to fetch weather data.';
+      const details = err.response?.data?.details;
+      setError(details ? `${msg} Details: ${typeof details === 'string' ? details : JSON.stringify(details)}` : msg);
     } finally {
       setLoading(false);
     }
@@ -166,7 +168,9 @@ function App() {
       setWeather(res.data.data);
       setEditingLocation(false);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load historical record.');
+      const msg = err.response?.data?.message || 'Failed to load historical record.';
+      const details = err.response?.data?.details;
+      setError(details ? `${msg} Details: ${typeof details === 'string' ? details : JSON.stringify(details)}` : msg);
     } finally {
       setLoading(false);
     }
