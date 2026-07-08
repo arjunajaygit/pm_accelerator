@@ -247,7 +247,7 @@ exports.createWeatherRecord = async (req, res, next) => {
         const prompt = `You are a concise travel advisor. In 2-3 sentences, provide practical travel advice for someone visiting ${fullLocationName}. The current weather is ${weatherDesc} at ${temp}°C. Include what to wear, any weather precautions, and one unique thing worth knowing about the area. Be specific and helpful.`;
 
         const aiResponse = await axios.post(
-          'https:
+          'https://api.groq.com/openai/v1/chat/completions',
           {
             model: 'llama-3.1-8b-instant',
             messages: [{ role: 'user', content: prompt }],
