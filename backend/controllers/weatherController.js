@@ -2,6 +2,8 @@
 
 const Weather = require('../models/Weather');
 const axios = require('axios');
+axios.defaults.headers.common['Accept-Encoding'] = 'gzip,deflate';
+axios.defaults.headers.common['Connection'] = 'close';
 const { validateDateRange, validateLocation, isValidCoordinates, parseCoordinates, validateUpdateFields } = require('../utils/validators');
 const { exportJSON, exportCSV, exportXML, exportPDF, exportMarkdown } = require('../utils/exporters');
 
