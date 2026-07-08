@@ -1,6 +1,8 @@
 
 const Weather = require('../models/Weather');
 const axios = require('axios');
+axios.defaults.headers.common['Accept-Encoding'] = 'gzip,deflate';
+axios.defaults.headers.common['Connection'] = 'close';
 const { validateDateRange, validateLocation, isValidCoordinates, parseCoordinates, validateUpdateFields } = require('../utils/validators');
 const { exportJSON, exportCSV, exportXML, exportPDF, exportMarkdown } = require('../utils/exporters');
 
@@ -126,10 +128,12 @@ exports.createWeatherRecord = async (req, res, next) => {
       forecastData = forecastRes.data;
       currentWeather = currentRes.data;
     } catch (err) {
+      console.error('[OpenWeatherMap API Error]', err.response ? err.response.data : err.message);
       return res.status(502).json({
         status: 'error',
         type: 'WEATHER_API_FAILED',
-        message: 'Unable to fetch weather data. The weather service may be temporarily unavailable.'
+        message: 'Unable to fetch weather data. The weather service may be temporarily unavailable.',
+        details: err.response ? err.response.data : err.message
       });
     }
 
