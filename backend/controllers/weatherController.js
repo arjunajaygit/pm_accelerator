@@ -1,8 +1,23 @@
 
 const Weather = require('../models/Weather');
 const axios = require('axios');
-axios.defaults.headers.common['Accept-Encoding'] = 'gzip,deflate';
-axios.defaults.headers.common['Connection'] = 'close';
+
+async function fetchJson(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    if (!res.ok) {
+      const err = new Error(`HTTP ${res.status}`);
+      err.response = { status: res.status, data: await res.text().catch(()=>'') };
+      throw err;
+    }
+    const data = await res.json();
+    return { data };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 const { validateDateRange, validateLocation, isValidCoordinates, parseCoordinates, validateUpdateFields } = require('../utils/validators');
 const { exportJSON, exportCSV, exportXML, exportPDF, exportMarkdown } = require('../utils/exporters');
 
@@ -51,7 +66,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       
       try {
         const reverseGeoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OPENWEATHER_KEY}`;
-        const reverseRes = await axios.get(reverseGeoUrl);
+        const reverseRes = await fetchJson(reverseGeoUrl);
         if (reverseRes.data && reverseRes.data.length > 0) {
           resolvedName = reverseRes.data[0].name;
           country = reverseRes.data[0].country;
@@ -67,7 +82,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       
       try {
         const zipUrl = `https://api.openweathermap.org/geo/1.0/zip?zip=${location.trim()},US&appid=${OPENWEATHER_KEY}`;
-        const zipRes = await axios.get(zipUrl);
+        const zipRes = await fetchJson(zipUrl);
         lat = zipRes.data.lat;
         lon = zipRes.data.lon;
         resolvedName = zipRes.data.name;
@@ -83,7 +98,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       
       try {
         const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location.trim())}&format=json&limit=1&addressdetails=1&accept-language=en`;
-        const geoRes = await axios.get(geoUrl, { headers: { 'User-Agent': 'AtmosphereWeatherApp/1.0' } });
+        const geoRes = await fetchJson(geoUrl, { headers: { 'User-Agent': 'AtmosphereWeatherApp/1.0' } });
 
         if (!geoRes.data || geoRes.data.length === 0) {
           return res.status(404).json({
@@ -121,8 +136,8 @@ exports.createWeatherRecord = async (req, res, next) => {
       const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_KEY}`;
       
       const [forecastRes, currentRes] = await Promise.all([
-        axios.get(forecastUrl),
-        axios.get(currentUrl)
+        fetchJson(forecastUrl),
+        fetchJson(currentUrl)
       ]);
       
       forecastData = forecastRes.data;
@@ -234,7 +249,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       try {
         const ytQuery = encodeURIComponent(`${resolvedName} ${country || ''} travel guide`);
         const ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${ytQuery}&type=video&videoEmbeddable=true&maxResults=5&key=${YOUTUBE_KEY}`;
-        const ytRes = await axios.get(ytUrl);
+        const ytRes = await fetchJson(ytUrl);
         videoIds = ytRes.data.items.map(v => v.id.videoId).filter(Boolean);
       } catch (ytErr) {
         console.warn('[YouTube API] Failed to fetch videos:', ytErr.message);
@@ -250,20 +265,20 @@ exports.createWeatherRecord = async (req, res, next) => {
         const temp = currentWeather.main.temp;
         const prompt = `You are a concise travel advisor. In 2-3 sentences, provide practical travel advice for someone visiting ${fullLocationName}. The current weather is ${weatherDesc} at ${temp}°C. Include what to wear, any weather precautions, and one unique thing worth knowing about the area. Be specific and helpful.`;
 
-        const aiResponse = await axios.post(
+        const aiResponse = await fetchJson(
           'https://api.groq.com/openai/v1/chat/completions',
           {
-            model: 'llama-3.1-8b-instant',
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 150,
-            temperature: 0.7
-          },
-          {
+            method: 'POST',
+            body: JSON.stringify({
+              model: 'llama-3.1-8b-instant',
+              messages: [{ role: 'user', content: prompt }],
+              max_tokens: 150,
+              temperature: 0.7
+            }),
             headers: {
               'Authorization': `Bearer ${GROQ_KEY}`,
               'Content-Type': 'application/json'
-            },
-            timeout: 10000
+            }
           }
         );
         aiInsight = aiResponse.data.choices[0].message.content.trim();
