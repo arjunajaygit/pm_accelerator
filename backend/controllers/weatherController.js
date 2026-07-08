@@ -1,23 +1,7 @@
 
+
 const Weather = require('../models/Weather');
 const axios = require('axios');
-
-async function fetchJson(url, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
-  try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    if (!res.ok) {
-      const err = new Error(`HTTP ${res.status}`);
-      err.response = { status: res.status, data: await res.text().catch(()=>'') };
-      throw err;
-    }
-    const data = await res.json();
-    return { data };
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
 const { validateDateRange, validateLocation, isValidCoordinates, parseCoordinates, validateUpdateFields } = require('../utils/validators');
 const { exportJSON, exportCSV, exportXML, exportPDF, exportMarkdown } = require('../utils/exporters');
 
@@ -26,6 +10,7 @@ const OPENWEATHER_KEY = process.env.OPENWEATHER_API_KEY;
 const YOUTUBE_KEY = process.env.YOUTUBE_API_KEY;
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_KEY;
 const GROQ_KEY = process.env.GROQ_API_KEY;
+
 
 exports.createWeatherRecord = async (req, res, next) => {
   try {
@@ -66,7 +51,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       
       try {
         const reverseGeoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OPENWEATHER_KEY}`;
-        const reverseRes = await fetchJson(reverseGeoUrl);
+        const reverseRes = await axios.get(reverseGeoUrl);
         if (reverseRes.data && reverseRes.data.length > 0) {
           resolvedName = reverseRes.data[0].name;
           country = reverseRes.data[0].country;
@@ -82,7 +67,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       
       try {
         const zipUrl = `https://api.openweathermap.org/geo/1.0/zip?zip=${location.trim()},US&appid=${OPENWEATHER_KEY}`;
-        const zipRes = await fetchJson(zipUrl);
+        const zipRes = await axios.get(zipUrl);
         lat = zipRes.data.lat;
         lon = zipRes.data.lon;
         resolvedName = zipRes.data.name;
@@ -98,7 +83,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       
       try {
         const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location.trim())}&format=json&limit=1&addressdetails=1&accept-language=en`;
-        const geoRes = await fetchJson(geoUrl, { headers: { 'User-Agent': 'AtmosphereWeatherApp/1.0' } });
+        const geoRes = await axios.get(geoUrl, { headers: { 'User-Agent': 'AtmosphereWeatherApp/1.0' } });
 
         if (!geoRes.data || geoRes.data.length === 0) {
           return res.status(404).json({
@@ -136,19 +121,17 @@ exports.createWeatherRecord = async (req, res, next) => {
       const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_KEY}`;
       
       const [forecastRes, currentRes] = await Promise.all([
-        fetchJson(forecastUrl),
-        fetchJson(currentUrl)
+        axios.get(forecastUrl),
+        axios.get(currentUrl)
       ]);
       
       forecastData = forecastRes.data;
       currentWeather = currentRes.data;
     } catch (err) {
-      console.error('[OpenWeatherMap API Error]', err.response ? err.response.data : err.message);
       return res.status(502).json({
         status: 'error',
         type: 'WEATHER_API_FAILED',
-        message: 'Unable to fetch weather data. The weather service may be temporarily unavailable.',
-        details: err.response ? err.response.data : err.message
+        message: 'Unable to fetch weather data. The weather service may be temporarily unavailable.'
       });
     }
 
@@ -239,17 +222,17 @@ exports.createWeatherRecord = async (req, res, next) => {
     if (GOOGLE_MAPS_KEY) {
       mapUrl = `https://www.google.com/maps/embed/v1/view?key=${GOOGLE_MAPS_KEY}&center=${lat},${lon}&zoom=11&maptype=roadmap`;
     } else {
-      // Fallback: OpenStreetMap embed (no API key needed)
+      
       mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon - 0.05},${lat - 0.05},${lon + 0.05},${lat + 0.05}&layer=mapnik&marker=${lat},${lon}`;
     }
 
-    // 7. YouTube travel videos (graceful degradation)
+    
     let videoIds = [];
     if (YOUTUBE_KEY) {
       try {
         const ytQuery = encodeURIComponent(`${resolvedName} ${country || ''} travel guide`);
         const ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${ytQuery}&type=video&videoEmbeddable=true&maxResults=5&key=${YOUTUBE_KEY}`;
-        const ytRes = await fetchJson(ytUrl);
+        const ytRes = await axios.get(ytUrl);
         videoIds = ytRes.data.items.map(v => v.id.videoId).filter(Boolean);
       } catch (ytErr) {
         console.warn('[YouTube API] Failed to fetch videos:', ytErr.message);
@@ -257,7 +240,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       }
     }
 
-    // 8. AI Travel Insight via Groq API (graceful degradation)
+    
     let aiInsight = '';
     if (GROQ_KEY) {
       try {
@@ -265,20 +248,20 @@ exports.createWeatherRecord = async (req, res, next) => {
         const temp = currentWeather.main.temp;
         const prompt = `You are a concise travel advisor. In 2-3 sentences, provide practical travel advice for someone visiting ${fullLocationName}. The current weather is ${weatherDesc} at ${temp}°C. Include what to wear, any weather precautions, and one unique thing worth knowing about the area. Be specific and helpful.`;
 
-        const aiResponse = await fetchJson(
+        const aiResponse = await axios.post(
           'https://api.groq.com/openai/v1/chat/completions',
           {
-            method: 'POST',
-            body: JSON.stringify({
-              model: 'llama-3.1-8b-instant',
-              messages: [{ role: 'user', content: prompt }],
-              max_tokens: 150,
-              temperature: 0.7
-            }),
+            model: 'llama-3.1-8b-instant',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 150,
+            temperature: 0.7
+          },
+          {
             headers: {
               'Authorization': `Bearer ${GROQ_KEY}`,
               'Content-Type': 'application/json'
-            }
+            },
+            timeout: 10000
           }
         );
         aiInsight = aiResponse.data.choices[0].message.content.trim();
@@ -288,7 +271,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       }
     }
 
-    // Provide a meaningful fallback if AI is not available
+    
     if (!aiInsight) {
       const temp = currentWeather.main.temp;
       if (temp < 0) {
@@ -302,7 +285,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       }
     }
 
-    // 9. Persist to MongoDB (Save as new record for historical tracking in exports)
+    
     const isCustomDate = !!startDate && forecast.length > 0;
     const weatherRecord = new Weather({
       location: location.trim(),
@@ -344,10 +327,7 @@ exports.createWeatherRecord = async (req, res, next) => {
   }
 };
 
-/**
- * READ — Get all weather records from database.
- * GET /api/weather
- */
+
 exports.getWeatherHistory = async (req, res, next) => {
   try {
     const { limit = 50, search } = req.query;
@@ -395,10 +375,7 @@ exports.getWeatherHistory = async (req, res, next) => {
   }
 };
 
-/**
- * READ — Get a single weather record by ID.
- * GET /api/weather/:id
- */
+
 exports.getWeatherById = async (req, res, next) => {
   try {
     const record = await Weather.findById(req.params.id);
@@ -415,16 +392,13 @@ exports.getWeatherById = async (req, res, next) => {
   }
 };
 
-/**
- * UPDATE — Update a weather record by ID.
- * PUT /api/weather/:id
- */
+
 exports.updateWeatherRecord = async (req, res, next) => {
   try {
     const { id } = req.params;
     const updates = req.body;
 
-    // Validate update fields
+    
     const updateValidation = validateUpdateFields(updates);
     if (!updateValidation.valid) {
       return res.status(400).json({
@@ -434,7 +408,7 @@ exports.updateWeatherRecord = async (req, res, next) => {
       });
     }
 
-    // Only allow location name fields to be updated
+    
     const allowedFields = ['resolvedLocation', 'location'];
     const sanitizedUpdates = {};
     for (const key of allowedFields) {
@@ -475,10 +449,7 @@ exports.updateWeatherRecord = async (req, res, next) => {
   }
 };
 
-/**
- * DELETE — Remove a weather record by ID.
- * DELETE /api/weather/:id
- */
+
 exports.deleteWeatherRecord = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -492,9 +463,9 @@ exports.deleteWeatherRecord = async (req, res, next) => {
       });
     }
 
-    // Since the frontend history is grouped by resolvedLocation, 
-    // deleting one record will just cause an older record for the same city to appear.
-    // To properly remove it from the sidebar, we delete all records for this location.
+    
+    
+    
     await Weather.deleteMany({ resolvedLocation: record.resolvedLocation });
 
     return res.status(200).json({
@@ -506,10 +477,7 @@ exports.deleteWeatherRecord = async (req, res, next) => {
   }
 };
 
-/**
- * EXPORT — Export all weather data in multiple formats.
- * GET /api/weather/export?format=json|csv|xml|pdf|md
- */
+
 exports.exportWeatherData = async (req, res, next) => {
   try {
     const { format } = req.query;
