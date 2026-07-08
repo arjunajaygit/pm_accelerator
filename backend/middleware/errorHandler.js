@@ -1,7 +1,3 @@
-/**
- * Global error handling middleware for Express.
- * Catches unhandled errors and returns structured JSON responses.
- */
 
 function errorHandler(err, req, res, next) {
   console.error('[ATMOSPHERE Error]', {
@@ -12,7 +8,7 @@ function errorHandler(err, req, res, next) {
     timestamp: new Date().toISOString()
   });
 
-  // Mongoose validation errors
+  
   if (err.name === 'ValidationError') {
     const messages = Object.values(err.errors).map(e => e.message);
     return res.status(400).json({
@@ -23,7 +19,7 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Mongoose cast errors (invalid ObjectId)
+  
   if (err.name === 'CastError') {
     return res.status(400).json({
       status: 'error',
@@ -32,7 +28,7 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Mongoose duplicate key
+  
   if (err.code === 11000) {
     return res.status(409).json({
       status: 'error',
@@ -41,7 +37,7 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Axios errors (upstream API failures)
+  
   if (err.isAxiosError) {
     const status = err.response?.status || 502;
     const upstream = err.config?.url ? new URL(err.config.url).hostname : 'unknown';
@@ -53,7 +49,7 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Default server error
+  
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
     status: 'error',

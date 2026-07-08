@@ -239,16 +239,16 @@ function App() {
 
   return (
     <>
-      {/* Background sits entirely outside the main app flow to guarantee it never scrolls */}
+      {}
       {!isLiteMode && <EarthBackground targetLocation={weather?.resolvedLocation} />}
       <div className={`app-container ${getBgClass()} ${isLiteMode ? 'lite-mode' : ''}`}>
 
-      {/* Minimal Sidebar Toggle */}
+      {}
       <button className="sidebar-toggle" onClick={() => setHistoryOpen(true)}>
         <History size={20} strokeWidth={1.5} />
       </button>
 
-      {/* Explicit Lite Mode Toggle */}
+      {}
       <button 
         className={`mode-toggle-top ${!isLiteMode ? 'active-green' : ''}`} 
         onClick={() => setIsLiteMode(!isLiteMode)}
@@ -399,7 +399,7 @@ function App() {
         {weather && (
           <div className="dashboard">
             
-            {/* Minimal Weather Card */}
+            {}
             <section className="current-weather glass-panel stagger-1">
               <div className="weather-main">
                 <div className="location-info">
@@ -501,7 +501,7 @@ function App() {
               </div>
             </section>
 
-            {/* Subtle AI Insight */}
+            {}
             {weather.aiInsight && (
               <section className="ai-insight glass-panel stagger-2">
                 <div className="insight-header">
@@ -512,7 +512,7 @@ function App() {
               </section>
             )}
 
-            {/* Forecast Grid */}
+            {}
             <section className="forecast glass-panel stagger-3">
               <h3 className="section-title">5-Day Forecast</h3>
               <div className="forecast-grid">
@@ -526,7 +526,7 @@ function App() {
               </div>
             </section>
 
-            {/* Media Section */}
+            {}
             <section className="media-section stagger-4">
               {weather.mapUrl && (
                 <div className="map-container glass-panel">

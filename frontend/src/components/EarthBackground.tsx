@@ -5,11 +5,6 @@ interface EarthBackgroundProps {
   targetLocation?: string;
 }
 
-/**
- * React.memo prevents this heavy WebGL component from re-rendering
- * when parent state changes (typing in search, sidebar toggling, etc.)
- * It will only re-render when `targetLocation` actually changes.
- */
 const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthBackgroundProps) {
   const cesiumContainer = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
@@ -21,7 +16,7 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
 
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiMzhjYjc0Yy01ZTQzLTQwODQtODBiOS04ZjhhMzRjMWIxZTciLCJpZCI6NDUyNzIwLCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoidW5kZWZpbmVkX2RlZmF1bHQiLCJpYXQiOjE3ODMyNjY4ODF9.6LpVh_yXbhyrct1kinKpYLolhBjSY17rqXz8TCnvxf4';
 
-    // Initialize Viewer with minimal UI
+    
     const viewer = new Cesium.Viewer(cesiumContainer.current, {
       timeline: false,
       animation: false,
@@ -46,55 +41,55 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
 
     viewerRef.current = viewer;
 
-    // Enable Anti-Aliasing (fixes graininess)
+    
     viewer.scene.msaaSamples = 4;
 
-    // --- PERFORMANCE OPTIMIZATIONS ---
-    // 1. Resolution Scale: Drop render resolution slightly on Retina/4K displays to save massive GPU fill rate, MSAA handles the edges
+    
+    
     viewer.resolutionScale = window.devicePixelRatio > 1 ? 0.75 : 1.0;
     
-    // 2. Disable redundant FXAA post-processing since we are using native hardware MSAA
+    
     if (viewer.scene.postProcessStages.fxaa) {
       viewer.scene.postProcessStages.fxaa.enabled = false;
     }
 
-    // 3. Cap frame rate to prevent GPU thermal throttling
+    
     viewer.targetFrameRate = 60;
 
-    // Force continuous rendering since we have auto-rotation
+    
     viewer.scene.requestRenderMode = false;
 
-    // LIVE PHYSICS: Sync clock perfectly to real-world system time
+    
     viewer.clock.clockStep = Cesium.ClockStep.SYSTEM_CLOCK;
     viewer.clock.multiplier = 1.0;
 
-    // Remove the default Cesium logo/credit container
+    
     if (viewer.creditDisplay && viewer.creditDisplay.container) {
       (viewer.creditDisplay.container as HTMLElement).style.display = 'none';
     }
 
-    // Enable dramatic day/night dynamic lighting
+    
     viewer.scene.globe.enableLighting = true;
-    viewer.scene.globe.dynamicAtmosphereLighting = true; // Makes the night side noticeably darker and atmosphere react to sun
-    viewer.scene.globe.showWaterEffect = false; // CRITICAL: Prevents the ocean from reflecting light and glowing in the dark
-    viewer.scene.globe.depthTestAgainstTerrain = false; // CRITICAL: Must be false on flat ellipsoid to prevent Z-fighting artifacts
+    viewer.scene.globe.dynamicAtmosphereLighting = true; 
+    viewer.scene.globe.showWaterEffect = false; 
+    viewer.scene.globe.depthTestAgainstTerrain = false; 
 
-    // Add NASA 'Earth at Night' (Black Marble) layer for stunning day/night contrast
+    
     Cesium.IonImageryProvider.fromAssetId(3812).then((provider) => {
       if (!viewerRef.current || viewerRef.current.isDestroyed()) return;
       const nightLayer = viewerRef.current.imageryLayers.addImageryProvider(provider);
-      nightLayer.dayAlpha = 0.0; // Invisible during the day
-      nightLayer.nightAlpha = 1.0; // Fully opaque city lights in the shadow
+      nightLayer.dayAlpha = 0.0; 
+      nightLayer.nightAlpha = 1.0; 
     }).catch(err => console.warn('Failed to load night imagery', err));
 
-    // Optimize cache to prevent tile tearing
+    
     viewer.scene.globe.tileCacheSize = 1000;
 
-    // Disable camera controls for passive background
+    
     viewer.scene.screenSpaceCameraController.enableInputs = false;
     viewer.scene.screenSpaceCameraController.enableZoom = false;
 
-    // Set initial camera view to see a low-earth orbit/surface view
+    
     viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(-90, 40, 500000),
       orientation: {
@@ -104,7 +99,7 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
       }
     });
 
-    // Cinematic Auto-Rotation
+    
     const rotateCamera = () => {
       if (isAutoRotating.current) {
         viewer.camera.rotate(Cesium.Cartesian3.UNIT_Z, 0.0005);
@@ -122,7 +117,7 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
     };
   }, []);
 
-  // Handle Location Changes (Live Camera Flights)
+  
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer || viewer.isDestroyed()) return;
@@ -147,10 +142,10 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
         const lat = parseFloat(data[0].lat);
         const lon = parseFloat(data[0].lon);
 
-        // Stop auto-rotation so we stay focused on the city
+        
         isAutoRotating.current = false;
 
-        // Perform cinematic flight
+        
         viewer.camera.flyTo({
           destination: Cesium.Cartesian3.fromDegrees(lon, lat, 500000),
           orientation: {

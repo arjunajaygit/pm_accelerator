@@ -1,6 +1,3 @@
-/**
- * Weather API Routes — RESTful endpoint definitions.
- */
 
 const express = require('express');
 const router = express.Router();
@@ -13,10 +10,10 @@ const {
   exportWeatherData
 } = require('../controllers/weatherController');
 
-// Export must come before :id route to avoid conflict
+
 router.get('/export', exportWeatherData);
 
-// CRUD routes
+
 router.post('/', createWeatherRecord);
 router.get('/', getWeatherHistory);
 router.get('/:id', getWeatherById);

@@ -1,30 +1,20 @@
-/**
- * Weather Controller — Core business logic and API orchestration.
- * 
- * Handles: CRUD operations, upstream API calls (OpenWeatherMap, YouTube, Google Maps, Gemini),
- * data aggregation, and multi-format exports.
- */
 
 const Weather = require('../models/Weather');
 const axios = require('axios');
 const { validateDateRange, validateLocation, isValidCoordinates, parseCoordinates, validateUpdateFields } = require('../utils/validators');
 const { exportJSON, exportCSV, exportXML, exportPDF, exportMarkdown } = require('../utils/exporters');
 
-// API Keys from environment
+
 const OPENWEATHER_KEY = process.env.OPENWEATHER_API_KEY;
 const YOUTUBE_KEY = process.env.YOUTUBE_API_KEY;
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_KEY;
 const GROQ_KEY = process.env.GROQ_API_KEY;
 
-/**
- * CREATE — Search weather, aggregate APIs, persist to database.
- * POST /api/weather
- */
 exports.createWeatherRecord = async (req, res, next) => {
   try {
     const { location, startDate, endDate } = req.body;
 
-    // 1. Validate location
+    
     const locValidation = validateLocation(location);
     if (!locValidation.valid) {
       return res.status(400).json({ 
@@ -34,7 +24,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       });
     }
 
-    // 2. Validate date range
+    
     const dateValidation = validateDateRange(
       startDate || new Date().toISOString(),
       endDate || new Date().toISOString()
@@ -47,16 +37,16 @@ exports.createWeatherRecord = async (req, res, next) => {
       });
     }
 
-    // 3. Resolve location to coordinates via OpenWeatherMap Geocoding API
+    
     let lat, lon, resolvedName, country;
 
     if (locValidation.type === 'coordinates') {
-      // Direct coordinates provided
+      
       const coords = parseCoordinates(location.trim());
       lat = coords.lat;
       lon = coords.lon;
 
-      // Reverse geocode to get location name
+      
       try {
         const reverseGeoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OPENWEATHER_KEY}`;
         const reverseRes = await axios.get(reverseGeoUrl);
@@ -72,7 +62,7 @@ exports.createWeatherRecord = async (req, res, next) => {
         country = '';
       }
     } else if (locValidation.type === 'zip') {
-      // ZIP code lookup
+      
       try {
         const zipUrl = `https://api.openweathermap.org/geo/1.0/zip?zip=${location.trim()},US&appid=${OPENWEATHER_KEY}`;
         const zipRes = await axios.get(zipUrl);
@@ -88,7 +78,7 @@ exports.createWeatherRecord = async (req, res, next) => {
         });
       }
     } else {
-      // City name / landmark / general text — use smarter OpenStreetMap Nominatim geocoding (Sorts by global importance)
+      
       try {
         const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location.trim())}&format=json&limit=1&addressdetails=1&accept-language=en`;
         const geoRes = await axios.get(geoUrl, { headers: { 'User-Agent': 'AtmosphereWeatherApp/1.0' } });
@@ -105,7 +95,7 @@ exports.createWeatherRecord = async (req, res, next) => {
         lat = parseFloat(primaryMatch.lat);
         lon = parseFloat(primaryMatch.lon);
         
-        // Nominatim perfectly preserves the searched major city name (e.g. 'Tokyo' instead of 'Chiyoda')
+        
         resolvedName = primaryMatch.name || location.trim();
         country = primaryMatch.address && primaryMatch.address.country_code 
           ? primaryMatch.address.country_code.toUpperCase() 
@@ -122,7 +112,7 @@ exports.createWeatherRecord = async (req, res, next) => {
 
     const fullLocationName = country ? `${resolvedName}, ${country}` : resolvedName;
 
-    // 4. Fetch precise live current weather + 5-day forecast from OpenWeatherMap concurrently
+    
     let currentWeather, forecastData;
     try {
       const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_KEY}`;
@@ -143,7 +133,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       });
     }
 
-    // 5. Build forecast strictly matching the date range. Mock historical data if in the past to fulfill CRUD requirements.
+    
     const forecast = [];
     const requestedStart = startDate ? new Date(startDate) : new Date();
     const requestedEnd = endDate ? new Date(endDate) : new Date(Date.now() + 5 * 86400000);
@@ -157,11 +147,11 @@ exports.createWeatherRecord = async (req, res, next) => {
     futureBoundary.setDate(futureBoundary.getDate() + 5);
 
     if (requestedStart < now || requestedStart >= futureBoundary) {
-      // Procedural Mocking for historical dates OR far future dates (since OWM Free doesn't support them)
+      
       let currentMockDate = new Date(requestedStart);
       while (currentMockDate <= requestedEnd && forecast.length < 5) {
         const dayStr = currentMockDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        // Deterministic pseudo-random variation based on timestamp
+        
         const variation = Math.sin(currentMockDate.getTime()) * 4; 
         forecast.push({
           day: dayStr,
@@ -178,7 +168,7 @@ exports.createWeatherRecord = async (req, res, next) => {
         currentMockDate.setDate(currentMockDate.getDate() + 1);
       }
     } else {
-      // Standard 5-day OpenWeatherMap forecast filtering
+      
       const seenDays = new Set();
       for (const item of forecastData.list) {
         const itemDate = new Date(item.dt * 1000);
@@ -203,7 +193,7 @@ exports.createWeatherRecord = async (req, res, next) => {
         }
       }
 
-      // Pad missing days if OWM cuts off early (e.g. they asked for 5 days starting 3 days from now)
+      
       let currentMockDate = new Date(requestedStart);
       currentMockDate.setDate(currentMockDate.getDate() + forecast.length); 
       while (currentMockDate <= requestedEnd && forecast.length < 5) {
@@ -225,7 +215,7 @@ exports.createWeatherRecord = async (req, res, next) => {
       }
     }
 
-    // 6. Google Maps embed URL
+    
     let mapUrl = '';
     if (GOOGLE_MAPS_KEY) {
       mapUrl = `https://www.google.com/maps/embed/v1/view?key=${GOOGLE_MAPS_KEY}&center=${lat},${lon}&zoom=11&maptype=roadmap`;
@@ -257,7 +247,7 @@ exports.createWeatherRecord = async (req, res, next) => {
         const prompt = `You are a concise travel advisor. In 2-3 sentences, provide practical travel advice for someone visiting ${fullLocationName}. The current weather is ${weatherDesc} at ${temp}°C. Include what to wear, any weather precautions, and one unique thing worth knowing about the area. Be specific and helpful.`;
 
         const aiResponse = await axios.post(
-          'https://api.groq.com/openai/v1/chat/completions',
+          'https:
           {
             model: 'llama-3.1-8b-instant',
             messages: [{ role: 'user', content: prompt }],

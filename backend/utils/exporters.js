@@ -1,15 +1,8 @@
-/**
- * Multi-format data export utilities.
- * Supports: JSON, CSV, XML, PDF, Markdown
- */
 
 const { Parser } = require('json2csv');
 const js2xmlparser = require('js2xmlparser');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 
-/**
- * Format a Date object or string into a local YYYY-MM-DD HH:MM:SS string.
- */
 function formatLocalDate(dateStr) {
   if (!dateStr) return 'N/A';
   const d = new Date(dateStr);
@@ -17,9 +10,6 @@ function formatLocalDate(dateStr) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-/**
- * Flatten weather records for tabular exports (CSV, Markdown).
- */
 function flattenRecords(records) {
   return records.map(r => ({
     id: r.id || r._id?.toString(),
@@ -39,10 +29,6 @@ function flattenRecords(records) {
   }));
 }
 
-/**
- * Export as JSON.
- * Improvement: Added metadata wrapper and removed internal MongoDB fields.
- */
 function exportJSON(records) {
   const cleanData = records.map(r => {
     const obj = { ...r._doc || r };
@@ -69,10 +55,6 @@ function exportJSON(records) {
   };
 }
 
-/**
- * Export as CSV.
- * Improvement: Human-readable headers.
- */
 function exportCSV(records) {
   const flat = flattenRecords(records);
   const fields = [
@@ -97,10 +79,6 @@ function exportCSV(records) {
   };
 }
 
-/**
- * Export as XML.
- * Improvement: Clean structure without DB fields.
- */
 function exportXML(records) {
   const cleanRecords = records.map(r => {
     const obj = { ...r._doc || r };
@@ -128,31 +106,27 @@ function exportXML(records) {
   };
 }
 
-/**
- * Export as PDF with styled layout.
- * Improvement: Highly polished table layout, headers, and backgrounds using pdf-lib.
- */
 async function exportPDF(records) {
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const italicFont = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
-  const pageWidth = 612; // US Letter
+  const pageWidth = 612; 
   const pageHeight = 792;
   const margin = 50;
   
   let page = pdfDoc.addPage([pageWidth, pageHeight]);
   let yPos = pageHeight - margin;
 
-  // Colors
+  
   const headerColor = rgb(0.1, 0.1, 0.2);
   const textDark = rgb(0.2, 0.2, 0.2);
   const textMuted = rgb(0.4, 0.4, 0.4);
   const primaryColor = rgb(0.1, 0.3, 0.6);
   const bgLight = rgb(0.95, 0.95, 0.97);
 
-  // Draw Header Background
+  
   page.drawRectangle({
     x: 0,
     y: pageHeight - 120,
@@ -161,17 +135,17 @@ async function exportPDF(records) {
     color: bgLight
   });
 
-  // Title
+  
   page.drawText('ATMOSPHERE', { x: margin, y: pageHeight - 60, size: 24, font: boldFont, color: headerColor });
   page.drawText('Weather Data Report', { x: margin, y: pageHeight - 85, size: 14, font: font, color: textMuted });
 
-  // Metadata
+  
   page.drawText(`Generated: ${new Date().toLocaleDateString()}`, { x: pageWidth - margin - 150, y: pageHeight - 60, size: 10, font: font, color: textMuted });
   page.drawText(`Total Records: ${records.length}`, { x: pageWidth - margin - 150, y: pageHeight - 75, size: 10, font: font, color: textMuted });
 
   yPos = pageHeight - 150;
 
-  // Table columns definition
+  
   const cols = [
     { name: 'Location', x: margin, w: 150 },
     { name: 'Temp', x: margin + 150, w: 60 },
@@ -180,7 +154,7 @@ async function exportPDF(records) {
     { name: 'Recorded', x: margin + 400, w: 100 }
   ];
 
-  // Draw Table Header function
+  
   const drawTableHeader = (p, y) => {
     p.drawRectangle({
       x: margin - 5,
@@ -205,7 +179,7 @@ async function exportPDF(records) {
       yPos -= 25;
     }
 
-    // Row Background (Zebra Striping)
+    
     if (i % 2 === 0) {
       page.drawRectangle({ 
         x: margin - 5, 
@@ -231,7 +205,7 @@ async function exportPDF(records) {
     yPos -= 20;
   });
 
-  // Footer on all pages
+  
   const pages = pdfDoc.getPages();
   pages.forEach((p, idx) => {
     p.drawText(`Page ${idx + 1} of ${pages.length} — ATMOSPHERE Weather Report`, {
@@ -252,10 +226,6 @@ async function exportPDF(records) {
   };
 }
 
-/**
- * Export as Markdown.
- * Improvement: Polished layout and formatting.
- */
 function exportMarkdown(records) {
   let md = `# ATMOSPHERE — Weather Data Export\n\n`;
   md += `> Generated on ${new Date().toISOString().split('T')[0]} | Total Records: ${records.length}\n`;
@@ -280,9 +250,6 @@ function exportMarkdown(records) {
   };
 }
 
-/**
- * Simple text wrapping utility for PDF.
- */
 function wrapText(text, maxChars) {
   if (!text) return [];
   const words = text.split(' ');

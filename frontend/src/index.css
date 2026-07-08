@@ -1,31 +1,22 @@
-/* ==========================================================================
-   Minimalist Professional Design System
-   ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&display=swap');
 
 :root {
-  /* Core Colors - Sleek Minimalist Dark */
-  --bg-dark: #09090b;
+    --bg-dark: #09090b;
   --panel-bg: rgba(255, 255, 255, 0.02);
   --panel-border: rgba(255, 255, 255, 0.06);
   --text-main: #fafafa;
   --text-muted: #a1a1aa;
 
-  /* Accent Colors (Subtle) */
-  --accent: #e4e4e7;
+    --accent: #e4e4e7;
   --accent-hover: #ffffff;
   --highlight: #3b82f6;
-  /* Used very sparingly */
+  
+    --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Utilities */
-  --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* Mobile-safe viewport height */
-  --vh-full: 100vh;
+    --vh-full: 100vh;
   --vh-full: 100dvh;
-  /* Uses dynamic viewport height on mobile browsers */
-}
+  }
 
 * {
   box-sizing: border-box;
@@ -43,17 +34,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ==========================================================================
-   Ambient Weather Glows
-   ========================================================================== */
 .app-container {
   min-height: var(--vh-full);
   position: relative;
   isolation: isolate;
-  /* Creates a stacking context to prevent z-index leaking */
-}
+  }
 
-/* Base glow setup */
 .app-container::before {
   content: '';
   position: absolute;
@@ -1207,11 +1193,9 @@ body {
   background: linear-gradient(to bottom, rgba(5, 5, 5, 0.5), rgba(10, 10, 20, 0.75));
   pointer-events: none;
   z-index: -5;
-  /* Prevent mobile safe-area bleed */
-  top: calc(-10vh - env(safe-area-inset-top, 0px));
+    top: calc(-10vh - env(safe-area-inset-top, 0px));
 }
 
-/* Welcome state text shadow for legibility over bright Earth */
 .welcome-state h2,
 .welcome-state p {
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
@@ -1221,9 +1205,6 @@ body {
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* ==========================================================================
-   Premium Date Picker (Glassmorphism overrides)
-   ========================================================================== */
 .react-datepicker-wrapper {
   display: inline-block;
   width: auto;
@@ -1293,9 +1274,6 @@ body {
   border-top-color: rgba(20, 20, 25, 0.9) !important;
 }
 
-/* ==========================================================================
-   Responsive Design (Mobile)
-   ========================================================================== */
 @media (max-width: 768px) {
   .app-container {
     padding: 0.75rem;
@@ -1305,8 +1283,7 @@ body {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
-    z-index: 999999; /* Force header above all animated dashboard elements */
-  }
+    z-index: 999999;   }
   
   .search-bar {
     padding: 1rem;

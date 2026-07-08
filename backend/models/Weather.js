@@ -90,7 +90,7 @@ const WeatherSchema = new mongoose.Schema({
   }
 });
 
-// Index for efficient queries
+
 WeatherSchema.index({ createdAt: -1 });
 WeatherSchema.index({ location: 'text' });
 
