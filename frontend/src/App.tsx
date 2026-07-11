@@ -193,10 +193,10 @@ function App() {
     if (!weather || !newLocationName.trim()) return;
     try {
       const targetId = weather._id || (weather as any).id;
-      await axios.put(`${API_BASE}/weather/${targetId}`, {
+      const res = await axios.put(`${API_BASE}/weather/${targetId}`, {
         resolvedLocation: newLocationName
       });
-      setWeather({ ...weather, resolvedLocation: newLocationName });
+      setWeather(res.data.data);
       setEditingLocation(false);
       fetchHistory();
     } catch (err) {

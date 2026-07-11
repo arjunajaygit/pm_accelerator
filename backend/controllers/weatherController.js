@@ -148,7 +148,7 @@ exports.updateWeatherRecord = async (req, res, next) => {
         });
       }
 
-      const result = await fetchAndBuildWeatherData(locationQuery, existingRecord.startDate, existingRecord.endDate);
+      const result = await fetchAndBuildWeatherData(locationQuery, undefined, undefined);
       if (result.status === 200) {
         Object.assign(sanitizedUpdates, result.data);
       }
@@ -157,7 +157,7 @@ exports.updateWeatherRecord = async (req, res, next) => {
     const updatedRecord = await Weather.findByIdAndUpdate(
       id,
       { $set: sanitizedUpdates },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
 
     if (!updatedRecord) {

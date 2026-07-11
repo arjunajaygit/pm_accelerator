@@ -18,7 +18,7 @@ async function fetchAndBuildWeatherData(location, startDate, endDate) {
 
     const dateValidation = validateDateRange(
       startDate || new Date().toISOString(),
-      endDate || new Date().toISOString()
+      endDate || new Date(Date.now() + 5 * 86400000).toISOString()
     );
     if (!dateValidation.valid) {
       return { status: 400, data: { 

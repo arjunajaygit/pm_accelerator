@@ -57,7 +57,13 @@ const WeatherSchema = new mongoose.Schema({
     required: [true, 'End date is required.'],
     validate: {
       validator: function(value) {
-        return value >= this.startDate;
+        let start = this.startDate;
+        if (!start && this.getUpdate) {
+          const update = this.getUpdate();
+          start = update.$set ? update.$set.startDate : update.startDate;
+        }
+        if (!start) return true;
+        return new Date(value) >= new Date(start);
       },
       message: 'End date must be on or after start date.'
     }
