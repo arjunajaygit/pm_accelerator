@@ -14,7 +14,7 @@ const EarthBackground = memo(function EarthBackground({ targetLocation }: EarthB
   useEffect(() => {
     if (!cesiumContainer.current) return;
 
-    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiMzhjYjc0Yy01ZTQzLTQwODQtODBiOS04ZjhhMzRjMWIxZTciLCJpZCI6NDUyNzIwLCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoidW5kZWZpbmVkX2RlZmF1bHQiLCJpYXQiOjE3ODMyNjY4ODF9.6LpVh_yXbhyrct1kinKpYLolhBjSY17rqXz8TCnvxf4';
+    Cesium.Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN || '';
 
     
     const viewer = new Cesium.Viewer(cesiumContainer.current, {
